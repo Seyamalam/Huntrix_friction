@@ -45,12 +45,14 @@ function applyThemeMode(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
+	const [isMounted, setIsMounted] = useState(false);
 	const [mode, setMode] = useState<ThemeMode>("auto");
 
 	useEffect(() => {
 		const initialMode = getInitialMode();
 		setMode(initialMode);
 		applyThemeMode(initialMode);
+		setIsMounted(true);
 	}, []);
 
 	useEffect(() => {
@@ -73,12 +75,16 @@ export default function ThemeToggle() {
 		window.localStorage.setItem("theme", nextMode);
 	}
 
+	if (!isMounted) {
+		return null;
+	}
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				className={cn(
 					buttonVariants({ variant: "secondary" }),
-					"absolute right-5 bottom-5 z-50 border border-[var(--unread-paper)]/25 bg-[var(--unread-ink)] text-[var(--unread-paper)] shadow-lg shadow-black/25 hover:bg-[var(--unread-green)] hover:text-white",
+					"fixed right-5 bottom-5 z-50 border border-[#f7f2e8]/25 bg-[#12110d] text-[#f7f2e8] shadow-lg shadow-black/25 hover:bg-[#2a8f78] hover:text-white",
 				)}
 			>
 				<SunIcon className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 sm:h-6 sm:w-6" />

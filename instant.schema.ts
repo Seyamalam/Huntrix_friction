@@ -16,9 +16,12 @@ const schema = i.schema({
 			updatedAt: i.number().indexed(),
 		}),
 		readingSessions: i.entity({
+			access: i.string<"private" | "invite" | "public">().indexed().optional(),
 			mode: i.string<"light" | "serious" | "brutal">().indexed(),
 			status: i.string<"active" | "completed">().indexed(),
 			currentChunkIndex: i.number(),
+			groupCurrentChunkIndex: i.number().optional(),
+			facilitatorNote: i.string().optional(),
 			createdAt: i.number().indexed(),
 			completedAt: i.number().indexed().optional(),
 		}),
@@ -32,6 +35,13 @@ const schema = i.schema({
 			answer: i.string(),
 			grade: i.string<"clear" | "vague" | "incorrect">().indexed(),
 			feedback: i.string().optional(),
+			isFeatured: i.boolean().optional(),
+			responderName: i.string().optional(),
+			createdAt: i.number().indexed(),
+		}),
+		sectionComments: i.entity({
+			body: i.string(),
+			authorName: i.string().optional(),
 			createdAt: i.number().indexed(),
 		}),
 		understandingReports: i.entity({
@@ -67,6 +77,22 @@ const schema = i.schema({
 			forward: { on: "responses", has: "one", label: "chunk" },
 			reverse: { on: "chunks", has: "many", label: "responses" },
 		},
+		responseResponder: {
+			forward: { on: "responses", has: "one", label: "responder" },
+			reverse: { on: "$users", has: "many", label: "responses" },
+		},
+		commentSession: {
+			forward: { on: "sectionComments", has: "one", label: "session" },
+			reverse: { on: "readingSessions", has: "many", label: "comments" },
+		},
+		commentChunk: {
+			forward: { on: "sectionComments", has: "one", label: "chunk" },
+			reverse: { on: "chunks", has: "many", label: "comments" },
+		},
+		commentAuthor: {
+			forward: { on: "sectionComments", has: "one", label: "author" },
+			reverse: { on: "$users", has: "many", label: "sectionComments" },
+		},
 		reportSession: {
 			forward: { on: "understandingReports", has: "one", label: "session" },
 			reverse: {
@@ -74,6 +100,20 @@ const schema = i.schema({
 				has: "one",
 				label: "understandingReport",
 			},
+		},
+	},
+	rooms: {
+		readingSessions: {
+			presence: i.entity({
+				id: i.string().optional(),
+				name: i.string().optional(),
+				email: i.string().optional(),
+				currentSection: i.number().optional(),
+				progress: i.number().optional(),
+				status: i.string().optional(),
+				answerInput: i.boolean().optional(),
+				cursor: i.any().optional(),
+			}),
 		},
 	},
 });

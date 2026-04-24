@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
 	{ name: "Reading room", to: "/" },
+	{ name: "Workspace", to: "/app" },
 	{ name: "Posts", to: "/blogs" },
 ] as const;
 

@@ -3,6 +3,7 @@ import {
 	HeadContent,
 	Link,
 	Scripts,
+	useRouterState,
 } from "@tanstack/react-router";
 
 import Header from "@/components/Header";
@@ -76,11 +77,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
 				<TooltipProvider>
-					<Header />
+					<ShellChrome />
 					<main className="w-full max-w-full overflow-x-hidden">
 						{children}
 					</main>
-					<ThemeToggle />
 					{/* <TanStackDevtools
 					config={{
 						position: "top-right",
@@ -96,5 +96,23 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<Scripts />
 			</body>
 		</html>
+	);
+}
+
+function ShellChrome() {
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	});
+	const isAppRoute = pathname === "/app" || pathname.startsWith("/app/");
+
+	if (isAppRoute) {
+		return null;
+	}
+
+	return (
+		<>
+			<Header />
+			<ThemeToggle />
+		</>
 	);
 }

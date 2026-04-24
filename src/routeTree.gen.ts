@@ -11,7 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as BlogsRouteImport } from './routes/blogs'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppCreateRouteImport } from './routes/app.create'
+import { Route as AppSessionSessionIdRouteImport } from './routes/app.session.$sessionId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -23,38 +27,91 @@ const BlogsRoute = BlogsRouteImport.update({
   path: '/blogs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCreateRoute = AppCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSessionSessionIdRoute = AppSessionSessionIdRouteImport.update({
+  id: '/session/$sessionId',
+  path: '/session/$sessionId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/blogs': typeof BlogsRoute
   '/login': typeof LoginRoute
+  '/app/create': typeof AppCreateRoute
+  '/app/': typeof AppIndexRoute
+  '/app/session/$sessionId': typeof AppSessionSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blogs': typeof BlogsRoute
   '/login': typeof LoginRoute
+  '/app/create': typeof AppCreateRoute
+  '/app': typeof AppIndexRoute
+  '/app/session/$sessionId': typeof AppSessionSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/blogs': typeof BlogsRoute
   '/login': typeof LoginRoute
+  '/app/create': typeof AppCreateRoute
+  '/app/': typeof AppIndexRoute
+  '/app/session/$sessionId': typeof AppSessionSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/blogs' | '/login'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/blogs'
+    | '/login'
+    | '/app/create'
+    | '/app/'
+    | '/app/session/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/blogs' | '/login'
-  id: '__root__' | '/' | '/blogs' | '/login'
+  to:
+    | '/'
+    | '/blogs'
+    | '/login'
+    | '/app/create'
+    | '/app'
+    | '/app/session/$sessionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/blogs'
+    | '/login'
+    | '/app/create'
+    | '/app/'
+    | '/app/session/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   BlogsRoute: typeof BlogsRoute
   LoginRoute: typeof LoginRoute
 }
@@ -75,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -82,11 +146,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/create': {
+      id: '/app/create'
+      path: '/create'
+      fullPath: '/app/create'
+      preLoaderRoute: typeof AppCreateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/session/$sessionId': {
+      id: '/app/session/$sessionId'
+      path: '/session/$sessionId'
+      fullPath: '/app/session/$sessionId'
+      preLoaderRoute: typeof AppSessionSessionIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppCreateRoute: typeof AppCreateRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppSessionSessionIdRoute: typeof AppSessionSessionIdRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCreateRoute: AppCreateRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppSessionSessionIdRoute: AppSessionSessionIdRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   BlogsRoute: BlogsRoute,
   LoginRoute: LoginRoute,
 }

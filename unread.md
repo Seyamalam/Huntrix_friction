@@ -131,6 +131,27 @@ Needs:
 - Better discussion quality
 - Shared understanding before meetings
 
+## Collaborative Reading
+
+Unread supports shared reading sessions where multiple signed-in readers open the same session link and work through a post together.
+
+The collaboration model is deliberately tied to the reading session, not a separate chat room. A session is the durable object; Instant rooms provide ephemeral presence, cursors, and typing state for that session.
+
+Core collaborative behaviors:
+
+- Shareable session links with `private`, `invite link`, and `public` access modes
+- Live avatars showing who is currently reading
+- Per-reader section and clear-answer progress
+- Cursor presence across the reader workspace
+- Typing indicators when someone is answering a checkpoint
+- Section-specific answer comparison
+- Section-specific discussion comments
+- Facilitator controls for the session owner or post author
+- Best-answer marking for strong responses
+- A group understanding panel that exposes clear answers, weak sections, and highlighted answers
+
+This makes Unread useful for classrooms, reading groups, async team memos, and workshop-style analysis.
+
 ## MVP
 
 The first version should be narrow and demoable.
@@ -293,9 +314,12 @@ This prevents the user from only understanding the most recent section.
 - `id`
 - `userId`
 - `postId`
+- `access`: `private`, `invite`, `public`
 - `mode`: `light`, `serious`, `brutal`
 - `status`: `active`, `completed`
 - `currentChunkIndex`
+- `groupCurrentChunkIndex`
+- `facilitatorNote`
 - `createdAt`
 - `completedAt`
 
@@ -313,9 +337,22 @@ This prevents the user from only understanding the most recent section.
 - `id`
 - `sessionId`
 - `chunkId`
+- `responderId`
+- `responderName`
 - `answer`
 - `grade`: `clear`, `vague`, `incorrect`
 - `feedback`
+- `isFeatured`
+- `createdAt`
+
+### SectionComment
+
+- `id`
+- `sessionId`
+- `chunkId`
+- `authorId`
+- `authorName`
+- `body`
 - `createdAt`
 
 ### UnderstandingReport
@@ -374,6 +411,13 @@ Components:
 - Answer input
 - AI feedback
 - Unlock next section button
+- Share and access controls
+- Live reader avatars
+- Current-section answer comparison
+- Section discussion thread
+- Reader progress panel
+- Facilitator note and group target controls
+- Group understanding panel
 
 Important constraint:
 
@@ -574,11 +618,12 @@ Priority order:
 3. Persist pasted posts, reading sessions, chunks, and responses to InstantDB.
 4. Replace local chunking and grading with AI jobs.
 5. Connect authenticated users to saved rooms and reports.
-6. Replace the placeholder public posts route with real published Unread posts.
-7. Add route protection for private rooms and author dashboards.
-8. Seed a polished demo post for hackathon and investor walkthroughs.
-9. Tighten mobile layout, keyboard states, and empty states.
-10. Commit cleanup and keep generated shadcn files out of unrelated changes.
+6. Add multiplayer reading sessions with presence, cursors, typing, comments, and shared answers.
+7. Replace the placeholder public posts route with real published Unread posts.
+8. Add route protection for private rooms and author dashboards.
+9. Seed a polished demo post for hackathon and investor walkthroughs.
+10. Tighten mobile layout, keyboard states, and empty states.
+11. Commit cleanup and keep generated shadcn files out of unrelated changes.
 
 ## Implementation Todo
 
@@ -588,9 +633,12 @@ Priority order:
 - [x] Implement locked guided-reader progression.
 - [x] Add local reflection grading for `clear`, `vague`, and `incorrect`.
 - [x] Add a basic understanding report from completed checkpoints.
-- [ ] Persist rooms and responses to InstantDB.
+- [x] Persist rooms and responses to InstantDB.
+- [x] Build the authenticated saved-rooms dashboard.
+- [x] Add collaborative reading rooms with avatars, cursors, typing indicators, and shared answers.
+- [x] Add session sharing/access controls.
+- [x] Add section comments and facilitator controls.
 - [ ] Generate chunks, prompts, grades, and reports with an LLM.
 - [ ] Add URL extraction for article imports.
-- [ ] Build the authenticated saved-rooms dashboard.
 - [ ] Build the public post reader route.
 - [ ] Add real author analytics.

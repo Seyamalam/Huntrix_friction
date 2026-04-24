@@ -17,39 +17,39 @@ const NAV_ITEMS = [
 
 export default function Header() {
 	return (
-		<header className="fixed top-0 right-0 left-0 z-50 border-b border-white/10 bg-[#12110d]/88 text-[#f7f2e8] shadow-[0_16px_70px_rgba(0,0,0,0.26)] backdrop-blur-xl">
-			<nav className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+		<header className="fixed top-0 right-0 left-0 z-50 border-b border-white/10 bg-[rgba(17,17,13,0.78)] text-[var(--unread-paper)] shadow-[0_18px_70px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+			<nav className="unread-shell flex min-h-18 items-center justify-between gap-4 py-3">
 				<Link
 					to="/"
-					className="group grid min-w-0 grid-cols-[2.5rem_1fr] items-center gap-3"
+					className="group grid min-w-0 grid-cols-[2.25rem_1fr] items-center gap-3"
 					aria-label="Unread home"
 				>
-					<span className="flex size-10 items-center justify-center bg-[#f7f2e8] text-[#17140f] transition-colors group-hover:bg-[#e7ce8e]">
+					<span className="flex size-9 items-center justify-center bg-[var(--unread-paper)] text-[var(--unread-ink)] transition-colors group-hover:bg-[var(--unread-gold)]">
 						<BookOpenText className="size-5" />
 					</span>
 					<span className="min-w-0">
-						<span className="block text-lg leading-none font-black tracking-normal">
+						<span className="block text-lg font-black leading-none">
 							Unread
 						</span>
-						<span className="hidden text-xs leading-5 text-[#d9d0c1]/82 sm:block">
+						<span className="hidden text-xs leading-5 text-[var(--unread-muted)] sm:block">
 							anti-summary reading
 						</span>
 					</span>
 				</Link>
 
-				<div className="hidden items-center gap-2 md:flex">
+				<div className="hidden items-center gap-1 border border-white/10 bg-white/[0.045] p-1 md:flex">
 					{NAV_ITEMS.map((item) => (
 						<Link
 							key={item.to}
 							to={item.to}
 							activeProps={{
-								className: "bg-[#f7f2e8] text-[#17140f]",
+								className: "bg-[var(--unread-paper)] text-[var(--unread-ink)]",
 							}}
 							inactiveProps={{
 								className:
-									"text-[#d9d0c1]/86 hover:bg-white/10 hover:text-white",
+									"text-[var(--unread-muted)] hover:bg-white/10 hover:text-white",
 							}}
-							className="inline-flex h-9 items-center px-3 text-xs font-semibold transition-colors"
+							className="inline-flex h-8 items-center px-3 text-xs font-semibold transition-colors"
 						>
 							{item.name}
 						</Link>
@@ -61,11 +61,11 @@ export default function Header() {
 						<TooltipTrigger
 							className={cn(
 								buttonVariants({ variant: "ghost", size: "sm" }),
-								"hidden h-9 border border-white/16 bg-white/[0.06] px-3 text-[#f7f2e8] hover:bg-white/12 hover:text-white sm:inline-flex",
+								"hidden h-9 border border-white/16 bg-white/[0.06] px-3 text-[var(--unread-paper)] hover:bg-white/12 hover:text-white sm:inline-flex",
 							)}
 						>
-							<CircleNotch className="size-4 text-[#e7ce8e]" />
-							<Badge className="h-5 rounded-none bg-transparent px-0 text-[#e7ce8e]">
+							<CircleNotch className="size-4 text-[var(--unread-gold)]" />
+							<Badge className="h-5 rounded-none bg-transparent px-0 text-[var(--unread-gold)]">
 								friction on
 							</Badge>
 						</TooltipTrigger>
@@ -78,7 +78,7 @@ export default function Header() {
 						to="/login"
 						className={cn(
 							buttonVariants({ size: "lg" }),
-							"h-10 bg-[#f7f2e8] px-4 text-[#17140f] hover:bg-[#e7ce8e]",
+							"h-10 bg-[var(--unread-paper)] px-4 text-[var(--unread-ink)] hover:bg-[var(--unread-gold)]",
 						)}
 					>
 						<span className="hidden sm:inline">Enter</span>
@@ -94,10 +94,10 @@ export default function Header() {
 							key={item.to}
 							to={item.to}
 							activeProps={{
-								className: "bg-[#f7f2e8] text-[#17140f]",
+								className: "bg-[var(--unread-paper)] text-[var(--unread-ink)]",
 							}}
 							inactiveProps={{
-								className: "bg-white/[0.06] text-[#f7f2e8]",
+								className: "bg-white/[0.06] text-[var(--unread-paper)]",
 							}}
 							className="flex h-9 flex-1 items-center justify-center text-xs font-semibold"
 						>

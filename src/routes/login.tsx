@@ -8,8 +8,9 @@ import {
 	SignOut,
 	WarningCircle,
 } from "@phosphor-icons/react";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { env } from "@/env";
 import { db, isInstantConfigured } from "@/lib/db";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
@@ -76,79 +78,15 @@ function LoginPage() {
 
 function LoginExperience() {
 	const auth = db.useAuth();
+	const isGoogleConfigured = Boolean(
+		env.VITE_GOOGLE_CLIENT_ID && env.VITE_INSTANT_GOOGLE_CLIENT_NAME,
+	);
 	const [email, setEmail] = useState("");
 	const [code, setCode] = useState("");
 	const [step, setStep] = useState<AuthStep>("email");
 	const [status, setStatus] = useState("");
 	const [error, setError] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const revealRef = useRef<HTMLParagraphElement>(null);
-	const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-
-	const revealWords = useMemo(
-		() =>
-			"Unread makes auth fast, then makes comprehension slow on purpose."
-				.split(" ")
-				.map((word, index) => ({ id: `${word}-${index.toString(36)}`, word })),
-		[],
-	);
-
-	useEffect(() => {
-		let cleanup = () => {};
-
-		async function mountMotion() {
-			const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
-				import("gsap"),
-				import("gsap/ScrollTrigger"),
-			]);
-			gsap.registerPlugin(ScrollTrigger);
-
-			const words = gsap.utils.toArray<HTMLElement>(".word-reveal");
-			gsap.fromTo(
-				words,
-				{ opacity: 0.18, y: 12 },
-				{
-					opacity: 1,
-					y: 0,
-					stagger: 0.07,
-					scrollTrigger: {
-						trigger: revealRef.current,
-						start: "top 78%",
-						end: "bottom 35%",
-						scrub: true,
-					},
-				},
-			);
-
-			cardRefs.current.forEach((node) => {
-				if (!node) return;
-				gsap.fromTo(
-					node,
-					{ opacity: 0.55, scale: 0.92, y: 24 },
-					{
-						opacity: 1,
-						scale: 1,
-						y: 0,
-						scrollTrigger: {
-							trigger: node,
-							start: "top 88%",
-							end: "bottom 36%",
-							scrub: true,
-						},
-					},
-				);
-			});
-
-			cleanup = () => {
-				for (const trigger of ScrollTrigger.getAll()) {
-					trigger.kill();
-				}
-			};
-		}
-
-		mountMotion();
-		return () => cleanup();
-	}, []);
 
 	async function handleSendCode(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -188,20 +126,19 @@ function LoginExperience() {
 	}
 
 	return (
-		<main className="min-h-dvh overflow-x-hidden bg-[#12110d] text-[#f7f2e8]">
-			<div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_14%_18%,rgba(231,206,142,0.18),transparent_27%),radial-gradient(circle_at_82%_20%,rgba(40,151,126,0.18),transparent_30%),linear-gradient(120deg,rgba(255,255,255,0.04),transparent_45%)]" />
-			<div className="pointer-events-none fixed inset-0 z-0 opacity-[0.14] [background-image:linear-gradient(rgba(255,255,255,.38)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.38)_1px,transparent_1px)] [background-size:72px_72px]" />
+		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-ink)] text-[var(--unread-paper)]">
+			<div className="unread-texture fixed inset-0 z-0" />
 
-			<section className="relative z-10 px-4 pt-32 pb-20 sm:px-6 lg:pt-40">
-				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.72fr)] lg:items-end">
+			<section className="unread-shell relative z-10 pb-20 pt-32 lg:pt-40">
+				<div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.72fr)] lg:items-end">
 					<div className="max-w-5xl">
-						<Badge className="rounded-none border-[#e7ce8e]/35 bg-[#e7ce8e]/10 text-[#ead493]">
+						<Badge className="unread-badge">
 							Instant auth for slow reading
 						</Badge>
-						<h1 className="mt-7 max-w-6xl text-[clamp(3.2rem,8vw,7.2rem)] leading-[0.86] font-black tracking-normal text-balance">
+						<h1 className="mt-7 max-w-6xl text-[clamp(3.2rem,8vw,7.2rem)] font-black leading-[0.86] text-balance">
 							Get in fast. Get through the text slowly.
 						</h1>
-						<p className="mt-7 max-w-2xl text-base leading-8 text-[#d9d0c1]/86 sm:text-lg">
+						<p className="mt-7 max-w-2xl text-base leading-8 text-[var(--unread-muted)] sm:text-lg">
 							Unread keeps authentication out of the way, then asks readers to
 							prove the argument before the next section appears.
 						</p>
@@ -212,9 +149,11 @@ function LoginExperience() {
 						code={code}
 						email={email}
 						error={error}
+						isGoogleConfigured={isGoogleConfigured}
 						isSubmitting={isSubmitting}
 						setCode={setCode}
 						setEmail={setEmail}
+						setError={setError}
 						setStep={setStep}
 						status={status}
 						step={step}
@@ -224,42 +163,32 @@ function LoginExperience() {
 				</div>
 			</section>
 
-			<section className="relative z-10 px-4 py-24 sm:px-6 lg:py-36">
-				<div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.72fr_1fr] lg:items-start">
-					<p
-						ref={revealRef}
-						className="sticky top-32 hidden max-w-xl text-[clamp(2.6rem,5vw,5.6rem)] leading-[0.93] font-black text-balance lg:block"
-					>
-						{revealWords.map((item) => (
-							<span key={item.id} className="word-reveal inline-block pr-3">
-								{item.word}
-							</span>
-						))}
+			<section className="unread-shell relative z-10 py-20 lg:py-28">
+				<div className="grid gap-8 lg:grid-cols-[0.72fr_1fr] lg:items-start">
+					<p className="sticky top-32 hidden max-w-xl text-[clamp(2.6rem,5vw,5.6rem)] font-black leading-[0.93] text-balance lg:block">
+						Unread makes auth fast, then makes comprehension slow on purpose.
 					</p>
 
 					<div className="grid gap-4 md:grid-cols-6">
-						{proofPanels.map((panel, index) => (
+						{proofPanels.map((panel) => (
 							<Card
 								key={panel.title}
-								ref={(node) => {
-									cardRefs.current[index] = node;
-								}}
-								className="border-0 bg-[#f7f2e8] text-[#17140f] ring-0 md:col-span-3 odd:md:translate-y-10"
+								className="unread-panel border-0 bg-[var(--unread-paper)] text-[var(--unread-ink)] ring-0 transition duration-300 hover:-translate-y-1 md:col-span-3 odd:md:translate-y-10"
 							>
 								<CardHeader>
 									<CardTitle className="text-3xl leading-none font-black">
 										{panel.title}
 									</CardTitle>
-									<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#4a4136]">
+									<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[var(--unread-ink-soft)]">
 										{panel.body}
 									</CardDescription>
 								</CardHeader>
-								<CardFooter className="border-[#17140f]/10">
-									<ArrowBendDownRight className="size-5 text-[#2a8f78]" />
+								<CardFooter className="border-[var(--unread-ink)]/10">
+									<ArrowBendDownRight className="size-5 text-[var(--unread-green)]" />
 								</CardFooter>
 							</Card>
 						))}
-						<Card className="border-0 bg-[#2a8f78] text-white ring-0 md:col-span-6">
+						<Card className="unread-panel border-0 bg-[var(--unread-green)] text-white ring-0 md:col-span-6">
 							<CardContent className="grid gap-2 p-4 sm:grid-cols-4">
 								{readingFlow.map((stepLabel) => (
 									<div
@@ -283,11 +212,13 @@ function AuthPanel({
 	code,
 	email,
 	error,
+	isGoogleConfigured,
 	isSubmitting,
 	onSendCode,
 	onVerifyCode,
 	setCode,
 	setEmail,
+	setError,
 	setStep,
 	status,
 	step,
@@ -296,11 +227,13 @@ function AuthPanel({
 	code: string;
 	email: string;
 	error: string;
+	isGoogleConfigured: boolean;
 	isSubmitting: boolean;
 	onSendCode: (event: React.FormEvent<HTMLFormElement>) => void;
 	onVerifyCode: (event: React.FormEvent<HTMLFormElement>) => void;
 	setCode: (value: string) => void;
 	setEmail: (value: string) => void;
+	setError: (value: string) => void;
 	setStep: (value: AuthStep) => void;
 	status: string;
 	step: AuthStep;
@@ -376,11 +309,22 @@ function AuthPanel({
 					Enter Unread
 				</CardTitle>
 				<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#4a4136]">
-					Magic codes keep sign-in short. The hard part starts after the text
-					appears.
+					{isGoogleConfigured
+						? "Use Google for the quickest entry, or fall back to a magic code."
+						: "Magic codes keep sign-in short. Add Google env vars to enable OAuth."}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
+				{isGoogleConfigured ? (
+					<>
+						<GoogleSignIn setError={setError} />
+						<div className="my-5 flex items-center gap-3 text-xs font-semibold text-[#6b6254]">
+							<Separator className="flex-1 bg-[#17140f]/10" />
+							<span>or use email</span>
+							<Separator className="flex-1 bg-[#17140f]/10" />
+						</div>
+					</>
+				) : null}
 				{step === "email" ? (
 					<form onSubmit={onSendCode}>
 						<FieldGroup>
@@ -470,6 +414,59 @@ function AuthPanel({
 	);
 }
 
+function GoogleSignIn({ setError }: { setError: (value: string) => void }) {
+	const [nonce] = useState(() => createNonce());
+	const googleClientId = env.VITE_GOOGLE_CLIENT_ID;
+	const instantGoogleClientName = env.VITE_INSTANT_GOOGLE_CLIENT_NAME;
+
+	if (!googleClientId || !instantGoogleClientName) {
+		return null;
+	}
+
+	return (
+		<div className="grid gap-3">
+			<GoogleOAuthProvider clientId={googleClientId}>
+				<div className="overflow-hidden border border-[#17140f]/15 bg-white/80 p-2">
+					<GoogleLogin
+						nonce={nonce}
+						shape="rectangular"
+						size="large"
+						text="signin_with"
+						theme="outline"
+						width="320"
+						onError={() => {
+							setError("Google sign-in failed. Try again or use a magic code.");
+						}}
+						onSuccess={({ credential }) => {
+							setError("");
+
+							if (!credential) {
+								setError(
+									"Google did not return an ID token. Try again or use a magic code.",
+								);
+								return;
+							}
+
+							db.auth
+								.signInWithIdToken({
+									clientName: instantGoogleClientName,
+									idToken: credential,
+									nonce,
+								})
+								.catch((err) => {
+									setError(getErrorMessage(err));
+								});
+						}}
+					/>
+				</div>
+			</GoogleOAuthProvider>
+			<p className="text-xs leading-5 text-[#6b6254]">
+				Google OAuth is active because both Google env vars are present.
+			</p>
+		</div>
+	);
+}
+
 function InstantSetupPage() {
 	return (
 		<main className="min-h-dvh overflow-x-hidden bg-[#12110d] px-4 pt-32 pb-20 text-[#f7f2e8] sm:px-6">
@@ -498,5 +495,22 @@ function InstantSetupPage() {
 
 function getErrorMessage(error: unknown) {
 	if (error instanceof Error) return error.message;
+	if (
+		error &&
+		typeof error === "object" &&
+		"body" in error &&
+		error.body &&
+		typeof error.body === "object" &&
+		"message" in error.body &&
+		typeof error.body.message === "string"
+	) {
+		return error.body.message;
+	}
 	return "Something went wrong. Try again.";
+}
+
+function createNonce() {
+	return (
+		globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)
+	);
 }

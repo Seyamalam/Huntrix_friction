@@ -45,12 +45,14 @@ function applyThemeMode(mode: ThemeMode) {
 }
 
 export default function ThemeToggle() {
+	const [isMounted, setIsMounted] = useState(false);
 	const [mode, setMode] = useState<ThemeMode>("auto");
 
 	useEffect(() => {
 		const initialMode = getInitialMode();
 		setMode(initialMode);
 		applyThemeMode(initialMode);
+		setIsMounted(true);
 	}, []);
 
 	useEffect(() => {
@@ -71,6 +73,10 @@ export default function ThemeToggle() {
 		setMode(nextMode);
 		applyThemeMode(nextMode);
 		window.localStorage.setItem("theme", nextMode);
+	}
+
+	if (!isMounted) {
+		return null;
 	}
 
 	return (

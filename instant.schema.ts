@@ -32,6 +32,7 @@ const schema = i.schema({
 			answer: i.string(),
 			grade: i.string<"clear" | "vague" | "incorrect">().indexed(),
 			feedback: i.string().optional(),
+			responderName: i.string().optional(),
 			createdAt: i.number().indexed(),
 		}),
 		understandingReports: i.entity({
@@ -67,6 +68,10 @@ const schema = i.schema({
 			forward: { on: "responses", has: "one", label: "chunk" },
 			reverse: { on: "chunks", has: "many", label: "responses" },
 		},
+		responseResponder: {
+			forward: { on: "responses", has: "one", label: "responder" },
+			reverse: { on: "$users", has: "many", label: "responses" },
+		},
 		reportSession: {
 			forward: { on: "understandingReports", has: "one", label: "session" },
 			reverse: {
@@ -74,6 +79,18 @@ const schema = i.schema({
 				has: "one",
 				label: "understandingReport",
 			},
+		},
+	},
+	rooms: {
+		readingSessions: {
+			presence: i.entity({
+				id: i.string().optional(),
+				name: i.string().optional(),
+				email: i.string().optional(),
+				currentSection: i.number().optional(),
+				answerInput: i.boolean().optional(),
+				cursor: i.any().optional(),
+			}),
 		},
 	},
 });

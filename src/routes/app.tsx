@@ -10,13 +10,14 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { db } from "@/lib/db";
+import { DevSeedRidiculousPostsButton } from "@/lib/devSeedRidiculousPosts";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
 const appNav = [
 	{ icon: House, label: "Dashboard", to: "/app" },
-	{ icon: Plus, label: "New room", to: "/app/create" },
+	{ icon: Plus, label: "New session", to: "/app/create" },
 	{ icon: FileText, label: "Public posts", to: "/blogs" },
 ] as const;
 
@@ -71,15 +72,18 @@ function AppLayout() {
 						</p>
 					</div>
 					{auth.user ? (
-						<Button
-							type="button"
-							variant="ghost"
-							className="mt-3 h-11 w-full justify-start text-[#f4efe4] hover:bg-white/10 hover:text-white"
-							onClick={() => db.auth.signOut()}
-						>
-							<SignOut className="size-4" />
-							Log out
-						</Button>
+						<>
+							<DevSeedRidiculousPostsButton userId={auth.user.id} />
+							<Button
+								type="button"
+								variant="ghost"
+								className="mt-3 h-11 w-full justify-start text-[#f4efe4] hover:bg-white/10 hover:text-white"
+								onClick={() => db.auth.signOut()}
+							>
+								<SignOut className="size-4" />
+								Log out
+							</Button>
+						</>
 					) : (
 						<Link
 							to="/login"

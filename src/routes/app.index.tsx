@@ -1,3 +1,4 @@
+import { id } from "@instantdb/react";
 import {
 	ArrowRight,
 	ChartBar,
@@ -7,11 +8,12 @@ import {
 	Plus,
 	WarningCircle,
 } from "@phosphor-icons/react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db, isInstantConfigured } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -79,7 +81,7 @@ function AppDashboard() {
 						Dashboard
 					</h1>
 					<p className="mt-3 max-w-2xl text-sm leading-6 text-[#5d574a]">
-						Manage posts, continue active rooms, and review evidence of
+						Manage posts, continue active sessions, and review evidence of
 						understanding.
 					</p>
 				</div>
@@ -90,14 +92,14 @@ function AppDashboard() {
 						"h-11 bg-[#11110d] text-white hover:bg-[#14876d]",
 					)}
 				>
-					New reading room
+					New reading session
 					<Plus className="size-4" />
 				</Link>
 			</header>
 
 			<section className="mt-5 grid gap-3 md:grid-cols-4">
 				<Metric label="posts" value={posts.length} />
-				<Metric label="active rooms" value={activeSessions.length} />
+				<Metric label="active sessions" value={activeSessions.length} />
 				<Metric label="clear answers" value={clearResponses.length} />
 				<Metric label="completion" suffix="%" value={completionRate} />
 			</section>
@@ -107,7 +109,7 @@ function AppDashboard() {
 					<Panel
 						icon={ClockCounterClockwise}
 						title="Continue reading"
-						subtitle="Active rooms stay parked at the current checkpoint."
+						subtitle="A session is one guided run through a post."
 					>
 						{activeSessions.length > 0 ? (
 							<div className="grid gap-3">
@@ -118,7 +120,7 @@ function AppDashboard() {
 						) : (
 							<EmptyPanel
 								action="Create a room"
-								body="No active sessions yet. Create a post and start the first checkpoint."
+								body="No active sessions yet. Create a post, then start reading it through checkpoints."
 								to="/app/create"
 							/>
 						)}
@@ -151,7 +153,7 @@ function AppDashboard() {
 					{posts.length > 0 ? (
 						<div className="grid gap-3">
 							{posts.map((post) => (
-								<PostCard key={post.id} post={post} />
+								<PostCard key={post.id} post={post} userId={auth.user.id} />
 							))}
 						</div>
 					) : (
@@ -252,7 +254,51 @@ function SessionCard({ session }: { session: SessionRecord }) {
 	);
 }
 
-function PostCard({ post }: { post: PostRecord }) {
+function PostCard({ post, userId }: { post: PostRecord; userId: string }) {
+	const navigate = useNavigate();
+	const [isStarting, setIsStarting] = useState(false);
+	const [error, setError] = useState("");
+	const activeSession = post.readingSessions?.find(
+		(session) => session.status === "active",
+	);
+
+	async function startReading() {
+		setError("");
+
+		if (activeSession) {
+			await navigate({
+				to: "/app/session/$sessionId",
+				params: { sessionId: activeSession.id },
+			});
+			return;
+		}
+
+		setIsStarting(true);
+
+		const sessionId = id();
+
+		try {
+			await db.transact(
+				db.tx.readingSessions[sessionId]
+					.update({
+						createdAt: Date.now(),
+						currentChunkIndex: 0,
+						mode: "serious",
+						status: "active",
+					})
+					.link({ post: post.id, user: userId }),
+			);
+			await navigate({
+				to: "/app/session/$sessionId",
+				params: { sessionId },
+			});
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setIsStarting(false);
+		}
+	}
+
 	return (
 		<article className="border border-[#17140f]/10 bg-[#f9f6ef] p-4">
 			<div className="flex items-start justify-between gap-3">
@@ -266,6 +312,20 @@ function PostCard({ post }: { post: PostRecord }) {
 				</div>
 				<FileText className="size-5 text-[#14876d]" />
 			</div>
+			<Button
+				type="button"
+				disabled={isStarting}
+				onClick={startReading}
+				className="mt-4 h-10 w-full bg-[#11110d] text-white hover:bg-[#14876d]"
+			>
+				{activeSession
+					? "Continue session"
+					: isStarting
+						? "Starting"
+						: "Start reading"}
+				<ArrowRight className="size-4" />
+			</Button>
+			{error ? <p className="mt-2 text-xs text-[#a75d3f]">{error}</p> : null}
 		</article>
 	);
 }
@@ -367,6 +427,22 @@ function AuthError({ message }: { message: string }) {
 			</Alert>
 		</main>
 	);
+}
+
+function getErrorMessage(error: unknown) {
+	if (error instanceof Error) return error.message;
+	if (
+		error &&
+		typeof error === "object" &&
+		"body" in error &&
+		error.body &&
+		typeof error.body === "object" &&
+		"message" in error.body &&
+		typeof error.body.message === "string"
+	) {
+		return error.body.message;
+	}
+	return "Something went wrong. Try again.";
 }
 
 type AppData = {

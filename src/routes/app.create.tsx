@@ -72,7 +72,7 @@ function CreatePostPage() {
 
 	async function createRoom() {
 		if (!auth.user) {
-			setError("Sign in before creating a reading room.");
+			setError("Sign in before creating a reading session.");
 			return;
 		}
 
@@ -150,7 +150,7 @@ function CreatePostPage() {
 						Auth required
 					</Badge>
 					<h1 className="mt-6 text-5xl font-black leading-none">
-						Sign in before creating rooms.
+						Sign in before creating sessions.
 					</h1>
 					<Link
 						to="/login"
@@ -290,7 +290,7 @@ function CreatePostPage() {
 						{error ? (
 							<Alert className="mt-5 border-white/20 bg-[#fff4ed] text-[#17140f]">
 								<WarningCircle className="size-4 text-[#a75d3f]" />
-								<AlertTitle>Could not create room</AlertTitle>
+								<AlertTitle>Could not create session</AlertTitle>
 								<AlertDescription>{error}</AlertDescription>
 							</Alert>
 						) : null}
@@ -301,7 +301,7 @@ function CreatePostPage() {
 							onClick={createRoom}
 							className="mt-5 h-12 w-full bg-white text-[#11110d] hover:bg-[#d0aa57]"
 						>
-							{isSaving ? "Creating" : "Create and start"}
+							{isSaving ? "Creating" : "Create session and start"}
 							<ArrowRight className="size-4" />
 						</Button>
 					</div>

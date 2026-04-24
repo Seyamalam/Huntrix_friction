@@ -1,13 +1,16 @@
-import { id } from "@instantdb/react";
+import { Cursors, id } from "@instantdb/react";
 import {
 	ArrowLeft,
 	ArrowRight,
+	ChatCircleDots,
 	CheckCircle,
+	CursorClick,
 	LockKey,
+	UsersThree,
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +39,7 @@ export const Route = createFileRoute("/app/session/$sessionId")({
 function ReadingSessionPage() {
 	const { sessionId } = Route.useParams();
 	const auth = db.useAuth();
+	const room = db.room("readingSessions", sessionId);
 	const query = db.useQuery(
 		auth.user
 			? {
@@ -45,6 +49,7 @@ function ReadingSessionPage() {
 						},
 						responses: {
 							chunk: {},
+							responder: {},
 						},
 						understandingReport: {},
 					},
@@ -55,6 +60,9 @@ function ReadingSessionPage() {
 	const [status, setStatus] = useState("");
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const cursorColor = useRef(
+		colorFromString(auth.user?.id ?? sessionId),
+	).current;
 
 	const session = (
 		(query.data as SessionData | undefined)?.readingSessions ?? []
@@ -86,6 +94,33 @@ function ReadingSessionPage() {
 		: undefined;
 	const isComplete = Boolean(session?.status === "completed");
 	const report = buildReport(chunks, latestResponses);
+	const displayName = getDisplayName(auth.user, sessionId);
+	const presenceData = useMemo(
+		() => ({
+			currentSection: currentIndex + 1,
+			email: auth.user?.email ?? "",
+			id: auth.user?.id ?? "",
+			name: displayName,
+		}),
+		[auth.user?.email, auth.user?.id, currentIndex, displayName],
+	);
+	db.rooms.useSyncPresence(room, presenceData, [
+		presenceData.currentSection,
+		presenceData.email,
+		presenceData.id,
+		presenceData.name,
+	]);
+	const presence = db.rooms.usePresence(room, { user: true });
+	const typing = db.rooms.useTypingIndicator(room, "answerInput", {
+		stopOnEnter: false,
+	});
+	const sharedAnswers = useMemo(
+		() =>
+			[...(session?.responses ?? [])].sort(
+				(a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0),
+			),
+		[session?.responses],
+	);
 
 	async function submitReflection() {
 		if (!auth.user || !session || !currentChunk) return;
@@ -130,8 +165,13 @@ function ReadingSessionPage() {
 						createdAt: now,
 						feedback: result.feedback,
 						grade: result.grade,
+						responderName: displayName,
 					})
-					.link({ chunk: currentChunk.id, session: session.id }),
+					.link({
+						chunk: currentChunk.id,
+						responder: auth.user.id,
+						session: session.id,
+					}),
 			];
 
 			if (result.grade === "clear") {
@@ -206,7 +246,13 @@ function ReadingSessionPage() {
 	}
 
 	return (
-		<main className="min-h-dvh px-4 py-5 sm:px-6 lg:px-8">
+		<Cursors
+			room={room}
+			spaceId="cursor"
+			userCursorColor={cursorColor}
+			className="min-h-dvh px-4 py-5 sm:px-6 lg:px-8"
+			zIndex={60}
+		>
 			<section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
 				<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
 					<Link
@@ -272,9 +318,14 @@ function ReadingSessionPage() {
 										<Textarea
 											value={answer}
 											onChange={(event) => setAnswer(event.target.value)}
+											onKeyDown={typing.inputProps.onKeyDown}
+											onBlur={typing.inputProps.onBlur}
 											className="min-h-32 border-[#17140f]/15 bg-[#f9f6ef] text-sm leading-6 text-[#17140f] placeholder:text-[#5d574a]"
 											placeholder="Answer in your own words."
 										/>
+										<p className="min-h-5 text-xs font-medium text-[#5d574a]">
+											{typing.active.length ? typingInfo(typing.active) : " "}
+										</p>
 									</Field>
 									<Button
 										type="button"
@@ -333,6 +384,12 @@ function ReadingSessionPage() {
 				</div>
 
 				<aside className="grid content-start gap-4">
+					<PresencePanel
+						currentSection={currentIndex + 1}
+						presence={presence}
+						typingPeers={typing.active}
+					/>
+
 					<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
 						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
 							section map
@@ -363,6 +420,8 @@ function ReadingSessionPage() {
 						</div>
 					</div>
 
+					<SharedAnswersPanel answers={sharedAnswers} />
+
 					<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
 						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
 							understanding report
@@ -383,7 +442,7 @@ function ReadingSessionPage() {
 					</div>
 				</aside>
 			</section>
-		</main>
+		</Cursors>
 	);
 }
 
@@ -392,6 +451,134 @@ function MiniMetric({ label, value }: { label: string; value: number }) {
 		<div className="bg-[#f9f6ef] p-3">
 			<p className="font-mono text-2xl font-black tabular-nums">{value}</p>
 			<p className="text-xs text-[#5d574a]">{label}</p>
+		</div>
+	);
+}
+
+function PresencePanel({
+	currentSection,
+	presence,
+	typingPeers,
+}: {
+	currentSection: number;
+	presence: {
+		peers: Record<string, PresencePerson>;
+		user?: PresencePerson;
+	};
+	typingPeers: PresencePerson[];
+}) {
+	const peers = Object.entries(presence.peers ?? {});
+	const readers = [
+		...(presence.user ? [["you", presence.user] as const] : []),
+		...peers,
+	];
+	const activeIds = new Set(
+		typingPeers.map((peer) => peer.id ?? peer.name).filter(Boolean),
+	);
+
+	return (
+		<div className="border border-[#17140f]/10 bg-[#11110d] p-5 text-white">
+			<div className="flex items-center justify-between gap-3">
+				<div>
+					<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#d0aa57]">
+						live session
+					</p>
+					<p className="mt-2 text-2xl font-black leading-none">
+						{readers.length || 1} reading now
+					</p>
+				</div>
+				<UsersThree className="size-7 text-[#d0aa57]" />
+			</div>
+
+			<div className="mt-5 grid gap-3">
+				{readers.map(([peerId, peer]) => {
+					const name = peer.name || shortPeerId(peerId);
+					const isTyping = activeIds.has(peer.id) || activeIds.has(peer.name);
+					return (
+						<div
+							key={peerId}
+							className="flex items-center gap-3 border border-white/10 bg-white/5 p-3"
+						>
+							<div className="relative">
+								<img
+									src={`https://instantdb.com/api/avatar?name=${encodeURIComponent(name)}&size=40`}
+									alt=""
+									className="size-10 rounded-full"
+								/>
+								<span className="absolute -right-0.5 -bottom-0.5 size-3 border-2 border-[#11110d] bg-[#14876d]" />
+							</div>
+							<div className="min-w-0 flex-1">
+								<p className="truncate text-sm font-bold">{name}</p>
+								<p className="text-xs text-white/55">
+									Section {peer.currentSection ?? currentSection}
+								</p>
+							</div>
+							{isTyping ? (
+								<span className="inline-flex items-center gap-1 bg-[#d0aa57] px-2 py-1 text-[11px] font-bold text-[#17140f]">
+									<ChatCircleDots className="size-3" />
+									typing
+								</span>
+							) : null}
+						</div>
+					);
+				})}
+			</div>
+
+			<div className="mt-4 flex items-center gap-2 text-xs text-white/55">
+				<CursorClick className="size-4 text-[#d0aa57]" />
+				Cursors appear when collaborators move around this page.
+			</div>
+		</div>
+	);
+}
+
+function SharedAnswersPanel({ answers }: { answers: ResponseRecord[] }) {
+	return (
+		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+			<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+				shared answers
+			</p>
+			{answers.length ? (
+				<div className="mt-5 grid max-h-[28rem] gap-3 overflow-auto pr-1">
+					{answers.map((response) => {
+						const name =
+							response.responderName || response.responder?.name || "Reader";
+						return (
+							<article
+								key={response.id}
+								className="border border-[#17140f]/10 bg-[#f9f6ef] p-3"
+							>
+								<div className="flex items-start justify-between gap-3">
+									<div className="min-w-0">
+										<p className="truncate text-sm font-black">{name}</p>
+										<p className="text-xs text-[#5d574a]">
+											Section {response.chunk?.index ?? "?"} ·{" "}
+											{formatStamp(response.createdAt)}
+										</p>
+									</div>
+									<Badge
+										className={cn(
+											"rounded-none",
+											response.grade === "clear"
+												? "bg-[#14876d] text-white"
+												: "bg-[#d0aa57] text-[#17140f]",
+										)}
+									>
+										{response.grade}
+									</Badge>
+								</div>
+								<p className="mt-3 line-clamp-5 text-sm leading-6 text-[#5d574a]">
+									{response.answer}
+								</p>
+							</article>
+						);
+					})}
+				</div>
+			) : (
+				<p className="mt-5 text-sm leading-7 text-[#5d574a]">
+					Answers from every signed-in reader in this session will appear here.
+				</p>
+			)}
 		</div>
 	);
 }
@@ -423,7 +610,7 @@ function AuthRequired() {
 					Auth required
 				</Badge>
 				<h1 className="mt-6 text-5xl font-black leading-none">
-					Sign in to read this room.
+					Sign in to read this session.
 				</h1>
 				<Link
 					to="/login"
@@ -468,6 +655,43 @@ function getErrorMessage(error: unknown) {
 	return "Something went wrong. Try again.";
 }
 
+function getDisplayName(
+	user: { email?: string | null; id?: string } | null | undefined,
+	sessionId: string,
+) {
+	if (user?.email) return user.email.split("@")[0] ?? user.email;
+	if (user?.id) return `reader-${user.id.slice(0, 6)}`;
+	return `reader-${sessionId.slice(0, 6)}`;
+}
+
+function colorFromString(value: string) {
+	let hash = 0;
+	for (let index = 0; index < value.length; index += 1) {
+		hash = value.charCodeAt(index) + ((hash << 5) - hash);
+	}
+	const colors = ["#14876d", "#a75d3f", "#6b58c7", "#b56a20", "#1f6aa5"];
+	return colors[Math.abs(hash) % colors.length];
+}
+
+function shortPeerId(peerId: string) {
+	return `reader-${peerId.slice(0, 6)}`;
+}
+
+function typingInfo(active: PresencePerson[]) {
+	if (active.length === 1) {
+		const name = active[0]?.name ?? "A reader";
+		return `${name} is typing...`;
+	}
+	return `${active.length} readers are typing...`;
+}
+
+function formatStamp(value?: number | Date) {
+	if (!value) return "just now";
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return "just now";
+	return date.toISOString().slice(0, 16).replace("T", " ");
+}
+
 type SessionData = {
 	readingSessions?: SessionRecord[];
 };
@@ -494,11 +718,26 @@ type ChunkRecord = ReadingChunk & {
 };
 
 type ResponseRecord = {
+	id: string;
 	answer: string;
 	chunk?: {
 		id: string;
+		index?: number;
 	};
 	createdAt?: number | Date;
 	feedback?: string;
 	grade: "clear" | "vague" | "incorrect";
+	responderName?: string;
+	responder?: {
+		id?: string;
+		name?: string;
+	};
+};
+
+type PresencePerson = {
+	answerInput?: boolean;
+	currentSection?: number;
+	email?: string;
+	id?: string;
+	name?: string;
 };

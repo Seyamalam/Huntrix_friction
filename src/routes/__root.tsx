@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 
 import Header from "@/components/Header";
 import ThemeToggle from "@/components/ThemeToggle";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import appCss from "@/styles.css?url";
 
@@ -35,14 +36,18 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static inline script prevents theme flash before hydration. */}
 				<script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
 				<HeadContent />
 			</head>
 			<body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
-				<Header />
-				<main className="p-3 container mx-auto">{children}</main>
-				<ThemeToggle />
-				{/* <TanStackDevtools
+				<TooltipProvider>
+					<Header />
+					<main className="w-full max-w-full overflow-x-hidden">
+						{children}
+					</main>
+					<ThemeToggle />
+					{/* <TanStackDevtools
 					config={{
 						position: "top-right",
 					}}
@@ -53,6 +58,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 						},
 					]}
 				/> */}
+				</TooltipProvider>
 				<Scripts />
 			</body>
 		</html>

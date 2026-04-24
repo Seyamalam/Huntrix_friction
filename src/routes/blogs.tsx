@@ -44,7 +44,7 @@ const posts = [
 
 function PostsPage() {
 	return (
-		<main className="min-h-dvh bg-[var(--unread-ink)] pt-28 text-[var(--unread-paper)]">
+		<main className="min-h-dvh bg-[var(--unread-paper)] pt-28 text-[var(--unread-ink)]">
 			<section className="unread-shell pb-14 pt-10">
 				<div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.55fr)] lg:items-end">
 					<div>
@@ -57,7 +57,7 @@ function PostsPage() {
 							metric is comprehension, not applause.
 						</p>
 					</div>
-					<div className="unread-panel bg-[var(--unread-paper)] p-5 text-[var(--unread-ink)]">
+					<div className="unread-panel bg-[var(--unread-ink)] p-5 text-[var(--unread-paper)]">
 						<div className="grid grid-cols-3 gap-3">
 							<Metric label="clear rate" value="72%" />
 							<Metric label="revisions" value="318" />
@@ -73,7 +73,7 @@ function PostsPage() {
 						<article
 							key={post.title}
 							className={cn(
-								"unread-panel group min-h-[28rem] bg-[var(--unread-paper)] p-5 text-[var(--unread-ink)] transition duration-300 hover:-translate-y-1 hover:bg-white",
+								"unread-panel group min-h-[28rem] bg-[var(--unread-paper)] p-5 text-[var(--unread-ink)] transition duration-300 hover:-translate-y-1 hover:bg-[var(--unread-paper-2)]",
 								index === 1 && "lg:translate-y-10",
 							)}
 						>
@@ -112,7 +112,7 @@ function PostsPage() {
 								hash="reader"
 								className={cn(
 									buttonVariants({ size: "lg" }),
-									"mt-8 h-12 w-full bg-[var(--unread-ink)] text-white hover:bg-[var(--unread-green)]",
+									"mt-8 h-12 w-full bg-[var(--unread-ink)] text-[var(--unread-paper)] hover:bg-[var(--unread-green)] hover:text-white",
 								)}
 							>
 								Open room
@@ -128,7 +128,7 @@ function PostsPage() {
 
 function Metric({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="border border-[var(--unread-ink)]/12 bg-white/55 p-4">
+		<div className="border border-[var(--unread-ink)]/12 bg-[var(--unread-paper-2)] p-4 text-[var(--unread-ink)]">
 			<p className="font-mono text-3xl font-black tabular-nums">{value}</p>
 			<p className="mt-1 text-xs font-semibold text-[var(--unread-ink-soft)]">
 				{label}

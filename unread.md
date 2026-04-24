@@ -565,3 +565,32 @@ Mitigation:
 - The future of reading should not be faster. It should be harder to fake understanding.
 - Unread adds friction between seeing words and claiming knowledge.
 
+## Next Build Plan
+
+Priority order:
+
+1. Build a working reading setup flow on the homepage.
+2. Build the guided reader loop with hidden next sections.
+3. Persist pasted posts, reading sessions, chunks, and responses to InstantDB.
+4. Replace local chunking and grading with AI jobs.
+5. Connect authenticated users to saved rooms and reports.
+6. Replace the placeholder public posts route with real published Unread posts.
+7. Add route protection for private rooms and author dashboards.
+8. Seed a polished demo post for hackathon and investor walkthroughs.
+9. Tighten mobile layout, keyboard states, and empty states.
+10. Commit cleanup and keep generated shadcn files out of unrelated changes.
+
+## Implementation Todo
+
+- [x] Document the next build plan in `unread.md`.
+- [x] Create a concrete implementation todo list.
+- [x] Implement the most important product slice: local reading setup.
+- [x] Implement locked guided-reader progression.
+- [x] Add local reflection grading for `clear`, `vague`, and `incorrect`.
+- [x] Add a basic understanding report from completed checkpoints.
+- [ ] Persist rooms and responses to InstantDB.
+- [ ] Generate chunks, prompts, grades, and reports with an LLM.
+- [ ] Add URL extraction for article imports.
+- [ ] Build the authenticated saved-rooms dashboard.
+- [ ] Build the public post reader route.
+- [ ] Add real author analytics.

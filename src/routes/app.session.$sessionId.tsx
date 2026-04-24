@@ -3,9 +3,16 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	ChatCircleDots,
+	ChatText,
 	CheckCircle,
+	Copy,
+	Crown,
 	CursorClick,
+	Globe,
 	LockKey,
+	Megaphone,
+	PushPin,
+	Target,
 	UsersThree,
 	WarningCircle,
 } from "@phosphor-icons/react";
@@ -44,8 +51,14 @@ function ReadingSessionPage() {
 		auth.user
 			? {
 					readingSessions: {
+						user: {},
 						post: {
+							author: {},
 							chunks: {},
+						},
+						comments: {
+							author: {},
+							chunk: {},
 						},
 						responses: {
 							chunk: {},
@@ -60,6 +73,12 @@ function ReadingSessionPage() {
 	const [status, setStatus] = useState("");
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const [comment, setComment] = useState("");
+	const [facilitatorNote, setFacilitatorNote] = useState("");
+	const [copied, setCopied] = useState(false);
+	const [isPostingComment, setIsPostingComment] = useState(false);
+	const [isUpdatingSession, setIsUpdatingSession] = useState(false);
+	const [responseActionId, setResponseActionId] = useState("");
 	const cursorColor = useRef(
 		colorFromString(auth.user?.id ?? sessionId),
 	).current;
@@ -74,9 +93,16 @@ function ReadingSessionPage() {
 			),
 		[session?.post?.chunks],
 	);
+	const userResponses = useMemo(
+		() =>
+			(session?.responses ?? []).filter(
+				(response) => response.responder?.id === auth.user?.id,
+			),
+		[auth.user?.id, session?.responses],
+	);
 	const latestResponses = useMemo(
-		() => buildResponseMap(session?.responses ?? []),
-		[session?.responses],
+		() => buildResponseMap(userResponses),
+		[userResponses],
 	);
 	const completedCount = Object.values(latestResponses).filter(
 		(response) => response.grade === "clear",
@@ -94,6 +120,12 @@ function ReadingSessionPage() {
 		: undefined;
 	const isComplete = Boolean(session?.status === "completed");
 	const report = buildReport(chunks, latestResponses);
+	const sessionAccess = session?.access ?? "private";
+	const isOwner = Boolean(
+		auth.user?.id &&
+			(auth.user.id === session?.user?.id ||
+				auth.user.id === session?.post?.author?.id),
+	);
 	const displayName = getDisplayName(auth.user, sessionId);
 	const presenceData = useMemo(
 		() => ({
@@ -101,14 +133,25 @@ function ReadingSessionPage() {
 			email: auth.user?.email ?? "",
 			id: auth.user?.id ?? "",
 			name: displayName,
+			progress: completedCount,
+			status: isComplete ? "completed" : "active",
 		}),
-		[auth.user?.email, auth.user?.id, currentIndex, displayName],
+		[
+			auth.user?.email,
+			auth.user?.id,
+			completedCount,
+			currentIndex,
+			displayName,
+			isComplete,
+		],
 	);
 	db.rooms.useSyncPresence(room, presenceData, [
 		presenceData.currentSection,
 		presenceData.email,
 		presenceData.id,
 		presenceData.name,
+		presenceData.progress,
+		presenceData.status,
 	]);
 	const presence = db.rooms.usePresence(room, { user: true });
 	const typing = db.rooms.useTypingIndicator(room, "answerInput", {
@@ -120,6 +163,28 @@ function ReadingSessionPage() {
 				(a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0),
 			),
 		[session?.responses],
+	);
+	const currentSectionAnswers = useMemo(
+		() =>
+			sharedAnswers.filter(
+				(response) => response.chunk?.id === currentChunk?.id,
+			),
+		[sharedAnswers, currentChunk?.id],
+	);
+	const currentSectionComments = useMemo(
+		() =>
+			[...(session?.comments ?? [])]
+				.filter((item) => item.chunk?.id === currentChunk?.id)
+				.sort((a, b) => Number(a.createdAt ?? 0) - Number(b.createdAt ?? 0)),
+		[session?.comments, currentChunk?.id],
+	);
+	const groupProgress = useMemo(
+		() => buildParticipantProgress(sharedAnswers, chunks.length),
+		[sharedAnswers, chunks.length],
+	);
+	const groupReport = useMemo(
+		() => buildGroupReport(chunks, sharedAnswers),
+		[chunks, sharedAnswers],
 	);
 
 	async function submitReflection() {
@@ -174,7 +239,7 @@ function ReadingSessionPage() {
 					}),
 			];
 
-			if (result.grade === "clear") {
+			if (isOwner && result.grade === "clear") {
 				const sessionUpdate = completesSession
 					? {
 							completedAt: now,
@@ -189,7 +254,7 @@ function ReadingSessionPage() {
 				tx.push(db.tx.readingSessions[session.id].update(sessionUpdate));
 			}
 
-			if (completesSession) {
+			if (isOwner && completesSession) {
 				const reportId = session.understandingReport?.id ?? id();
 				tx.push(
 					db.tx.understandingReports[reportId]
@@ -219,6 +284,115 @@ function ReadingSessionPage() {
 			setError(getErrorMessage(err));
 		} finally {
 			setIsSaving(false);
+		}
+	}
+
+	async function copySessionLink() {
+		const link =
+			typeof window === "undefined"
+				? `/app/session/${sessionId}`
+				: window.location.href;
+		try {
+			await navigator.clipboard.writeText(link);
+			setCopied(true);
+			window.setTimeout(() => setCopied(false), 1600);
+		} catch {
+			setError("Could not copy the session link from this browser.");
+		}
+	}
+
+	async function updateAccess(access: SessionAccess) {
+		if (!session || !isOwner) return;
+		setIsUpdatingSession(true);
+		setError("");
+		try {
+			await db.transact(db.tx.readingSessions[session.id].update({ access }));
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setIsUpdatingSession(false);
+		}
+	}
+
+	async function publishFacilitatorNote() {
+		if (!session || !isOwner) return;
+		const cleanNote = facilitatorNote.trim();
+		setIsUpdatingSession(true);
+		setError("");
+		try {
+			await db.transact(
+				db.tx.readingSessions[session.id].update({
+					facilitatorNote: cleanNote,
+				}),
+			);
+			setFacilitatorNote("");
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setIsUpdatingSession(false);
+		}
+	}
+
+	async function moveGroupToCurrentSection() {
+		if (!session || !isOwner) return;
+		setIsUpdatingSession(true);
+		setError("");
+		try {
+			await db.transact(
+				db.tx.readingSessions[session.id].update({
+					groupCurrentChunkIndex: currentIndex,
+				}),
+			);
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setIsUpdatingSession(false);
+		}
+	}
+
+	async function postComment() {
+		if (!auth.user || !session || !currentChunk) return;
+		const cleanComment = comment.trim();
+		if (cleanComment.length < 2) return;
+
+		setIsPostingComment(true);
+		setError("");
+		try {
+			await db.transact(
+				db.tx.sectionComments[id()]
+					.update({
+						authorName: displayName,
+						body: cleanComment,
+						createdAt: Date.now(),
+					})
+					.link({
+						author: auth.user.id,
+						chunk: currentChunk.id,
+						session: session.id,
+					}),
+			);
+			setComment("");
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setIsPostingComment(false);
+		}
+	}
+
+	async function toggleFeaturedResponse(response: ResponseRecord) {
+		if (!isOwner) return;
+		setResponseActionId(response.id);
+		setError("");
+		try {
+			await db.transact(
+				db.tx.responses[response.id].update({
+					isFeatured: !response.isFeatured,
+				}),
+			);
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setResponseActionId("");
 		}
 	}
 
@@ -282,6 +456,15 @@ function ReadingSessionPage() {
 							{() => `${completedCount}/${chunks.length}`}
 						</ProgressValue>
 					</Progress>
+
+					<SessionShareControls
+						access={sessionAccess}
+						copied={copied}
+						disabled={isUpdatingSession}
+						isOwner={isOwner}
+						onCopy={copySessionLink}
+						onUpdateAccess={updateAccess}
+					/>
 
 					{currentChunk ? (
 						<div className="mt-6 grid gap-4">
@@ -365,6 +548,21 @@ function ReadingSessionPage() {
 								</Alert>
 							) : null}
 
+							<SectionAnswersPanel
+								answers={currentSectionAnswers}
+								isOwner={isOwner}
+								onToggleFeatured={toggleFeaturedResponse}
+								responseActionId={responseActionId}
+							/>
+
+							<SectionDiscussionPanel
+								comment={comment}
+								comments={currentSectionComments}
+								disabled={isPostingComment}
+								onCommentChange={setComment}
+								onPostComment={postComment}
+							/>
+
 							{status ? (
 								<Alert className="border-[#17140f]/10 bg-[#f9f6ef] text-[#17140f]">
 									<LockKey className="size-4 text-[#14876d]" />
@@ -385,10 +583,25 @@ function ReadingSessionPage() {
 
 				<aside className="grid content-start gap-4">
 					<PresencePanel
+						chunkCount={chunks.length}
 						currentSection={currentIndex + 1}
 						presence={presence}
 						typingPeers={typing.active}
 					/>
+
+					<FacilitatorPanel
+						currentNote={session.facilitatorNote}
+						currentSection={currentIndex + 1}
+						disabled={isUpdatingSession}
+						groupSection={Number(session.groupCurrentChunkIndex ?? 0) + 1}
+						isOwner={isOwner}
+						note={facilitatorNote}
+						onMoveGroup={moveGroupToCurrentSection}
+						onNoteChange={setFacilitatorNote}
+						onPublishNote={publishFacilitatorNote}
+					/>
+
+					<ParticipantProgressPanel progress={groupProgress} />
 
 					<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
 						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
@@ -420,7 +633,7 @@ function ReadingSessionPage() {
 						</div>
 					</div>
 
-					<SharedAnswersPanel answers={sharedAnswers} />
+					<GroupReportPanel report={groupReport} />
 
 					<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
 						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
@@ -455,11 +668,76 @@ function MiniMetric({ label, value }: { label: string; value: number }) {
 	);
 }
 
+function SessionShareControls({
+	access,
+	copied,
+	disabled,
+	isOwner,
+	onCopy,
+	onUpdateAccess,
+}: {
+	access: SessionAccess;
+	copied: boolean;
+	disabled: boolean;
+	isOwner: boolean;
+	onCopy: () => void;
+	onUpdateAccess: (access: SessionAccess) => void;
+}) {
+	const accessOptions: Array<{
+		icon: typeof LockKey;
+		label: string;
+		value: SessionAccess;
+	}> = [
+		{ icon: LockKey, label: "Private", value: "private" },
+		{ icon: UsersThree, label: "Invite link", value: "invite" },
+		{ icon: Globe, label: "Public", value: "public" },
+	];
+
+	return (
+		<div className="mt-5 grid gap-3 border border-[#17140f]/10 bg-[#f9f6ef] p-4 lg:grid-cols-[1fr_auto]">
+			<div>
+				<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+					share settings
+				</p>
+				<div className="mt-3 flex flex-wrap gap-2">
+					{accessOptions.map(({ icon: Icon, label, value }) => (
+						<Button
+							key={value}
+							type="button"
+							disabled={!isOwner || disabled}
+							onClick={() => onUpdateAccess(value)}
+							className={cn(
+								"h-9 border px-3 text-xs font-bold",
+								access === value
+									? "border-[#11110d] bg-[#11110d] text-white"
+									: "border-[#17140f]/10 bg-white text-[#5d574a] hover:bg-white",
+							)}
+						>
+							<Icon className="size-4" />
+							{label}
+						</Button>
+					))}
+				</div>
+			</div>
+			<Button
+				type="button"
+				onClick={onCopy}
+				className="h-11 self-end bg-[#14876d] text-white hover:bg-[#11110d]"
+			>
+				<Copy className="size-4" />
+				{copied ? "Copied" : "Copy session link"}
+			</Button>
+		</div>
+	);
+}
+
 function PresencePanel({
+	chunkCount,
 	currentSection,
 	presence,
 	typingPeers,
 }: {
+	chunkCount: number;
 	currentSection: number;
 	presence: {
 		peers: Record<string, PresencePerson>;
@@ -510,7 +788,8 @@ function PresencePanel({
 							<div className="min-w-0 flex-1">
 								<p className="truncate text-sm font-bold">{name}</p>
 								<p className="text-xs text-white/55">
-									Section {peer.currentSection ?? currentSection}
+									Section {peer.currentSection ?? currentSection} ·{" "}
+									{peer.progress ?? 0}/{chunkCount || 1} clear
 								</p>
 							</div>
 							{isTyping ? (
@@ -532,14 +811,137 @@ function PresencePanel({
 	);
 }
 
-function SharedAnswersPanel({ answers }: { answers: ResponseRecord[] }) {
+function FacilitatorPanel({
+	currentNote,
+	currentSection,
+	disabled,
+	groupSection,
+	isOwner,
+	note,
+	onMoveGroup,
+	onNoteChange,
+	onPublishNote,
+}: {
+	currentNote?: string;
+	currentSection: number;
+	disabled: boolean;
+	groupSection: number;
+	isOwner: boolean;
+	note: string;
+	onMoveGroup: () => void;
+	onNoteChange: (value: string) => void;
+	onPublishNote: () => void;
+}) {
+	return (
+		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+			<div className="flex items-start justify-between gap-3">
+				<div>
+					<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+						facilitator
+					</p>
+					<p className="mt-2 text-sm leading-6 text-[#5d574a]">
+						Group target: section {groupSection}
+					</p>
+				</div>
+				<Crown className="size-5 text-[#d0aa57]" />
+			</div>
+			{currentNote ? (
+				<div className="mt-4 border border-[#17140f]/10 bg-[#f9f6ef] p-3">
+					<p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#14876d]">
+						<Megaphone className="size-4" />
+						note
+					</p>
+					<p className="mt-2 text-sm leading-6 text-[#5d574a]">{currentNote}</p>
+				</div>
+			) : null}
+			{isOwner ? (
+				<div className="mt-4 grid gap-3">
+					<Button
+						type="button"
+						disabled={disabled}
+						onClick={onMoveGroup}
+						className="h-10 bg-[#11110d] text-white hover:bg-[#14876d]"
+					>
+						<Target className="size-4" />
+						Nudge group to section {currentSection}
+					</Button>
+					<Textarea
+						value={note}
+						onChange={(event) => onNoteChange(event.target.value)}
+						className="min-h-20 border-[#17140f]/15 bg-[#f9f6ef] text-sm"
+						placeholder="Leave a short note for everyone in the session."
+					/>
+					<Button
+						type="button"
+						disabled={disabled}
+						onClick={onPublishNote}
+						className="h-10 bg-[#14876d] text-white hover:bg-[#11110d]"
+					>
+						<Megaphone className="size-4" />
+						Publish note
+					</Button>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+function ParticipantProgressPanel({
+	progress,
+}: {
+	progress: ParticipantProgress[];
+}) {
 	return (
 		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
 			<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
-				shared answers
+				reader progress
+			</p>
+			{progress.length ? (
+				<div className="mt-5 grid gap-3">
+					{progress.map((reader) => (
+						<div key={reader.name} className="bg-[#f9f6ef] p-3">
+							<div className="flex items-center justify-between gap-3">
+								<p className="truncate text-sm font-black">{reader.name}</p>
+								<p className="font-mono text-xs text-[#5d574a]">
+									{reader.clear}/{reader.total}
+								</p>
+							</div>
+							<div className="mt-3 h-2 bg-[#17140f]/10">
+								<div
+									className="h-full bg-[#14876d]"
+									style={{ width: `${reader.percent}%` }}
+								/>
+							</div>
+						</div>
+					))}
+				</div>
+			) : (
+				<p className="mt-5 text-sm leading-7 text-[#5d574a]">
+					Reader progress appears after someone submits an answer.
+				</p>
+			)}
+		</div>
+	);
+}
+
+function SectionAnswersPanel({
+	answers,
+	isOwner,
+	onToggleFeatured,
+	responseActionId,
+}: {
+	answers: ResponseRecord[];
+	isOwner: boolean;
+	onToggleFeatured: (response: ResponseRecord) => void;
+	responseActionId: string;
+}) {
+	return (
+		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+			<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+				this section's answers
 			</p>
 			{answers.length ? (
-				<div className="mt-5 grid max-h-[28rem] gap-3 overflow-auto pr-1">
+				<div className="mt-5 grid gap-3 md:grid-cols-2">
 					{answers.map((response) => {
 						const name =
 							response.responderName || response.responder?.name || "Reader";
@@ -550,7 +952,12 @@ function SharedAnswersPanel({ answers }: { answers: ResponseRecord[] }) {
 							>
 								<div className="flex items-start justify-between gap-3">
 									<div className="min-w-0">
-										<p className="truncate text-sm font-black">{name}</p>
+										<p className="flex items-center gap-2 truncate text-sm font-black">
+											{name}
+											{response.isFeatured ? (
+												<PushPin className="size-4 text-[#d0aa57]" />
+											) : null}
+										</p>
 										<p className="text-xs text-[#5d574a]">
 											Section {response.chunk?.index ?? "?"} ·{" "}
 											{formatStamp(response.createdAt)}
@@ -570,15 +977,115 @@ function SharedAnswersPanel({ answers }: { answers: ResponseRecord[] }) {
 								<p className="mt-3 line-clamp-5 text-sm leading-6 text-[#5d574a]">
 									{response.answer}
 								</p>
+								{isOwner ? (
+									<Button
+										type="button"
+										disabled={responseActionId === response.id}
+										onClick={() => onToggleFeatured(response)}
+										className="mt-3 h-9 bg-[#11110d] text-white hover:bg-[#14876d]"
+									>
+										<PushPin className="size-4" />
+										{response.isFeatured ? "Unmark best" : "Mark best"}
+									</Button>
+								) : null}
 							</article>
 						);
 					})}
 				</div>
 			) : (
 				<p className="mt-5 text-sm leading-7 text-[#5d574a]">
-					Answers from every signed-in reader in this session will appear here.
+					Answers from everyone reading this section will appear here.
 				</p>
 			)}
+		</div>
+	);
+}
+
+function SectionDiscussionPanel({
+	comment,
+	comments,
+	disabled,
+	onCommentChange,
+	onPostComment,
+}: {
+	comment: string;
+	comments: CommentRecord[];
+	disabled: boolean;
+	onCommentChange: (value: string) => void;
+	onPostComment: () => void;
+}) {
+	return (
+		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+			<p className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+				<ChatText className="size-4" />
+				section discussion
+			</p>
+			<div className="mt-5 grid gap-3">
+				{comments.map((item) => (
+					<div
+						key={item.id}
+						className="border border-[#17140f]/10 bg-[#f9f6ef] p-3"
+					>
+						<div className="flex items-center justify-between gap-3">
+							<p className="text-sm font-black">
+								{item.authorName || item.author?.name || "Reader"}
+							</p>
+							<p className="font-mono text-xs text-[#5d574a]">
+								{formatStamp(item.createdAt)}
+							</p>
+						</div>
+						<p className="mt-2 text-sm leading-6 text-[#5d574a]">{item.body}</p>
+					</div>
+				))}
+			</div>
+			<div className="mt-4 grid gap-3">
+				<Textarea
+					value={comment}
+					onChange={(event) => onCommentChange(event.target.value)}
+					className="min-h-20 border-[#17140f]/15 bg-[#f9f6ef] text-sm"
+					placeholder="Ask a question, challenge an interpretation, or add context."
+				/>
+				<Button
+					type="button"
+					disabled={disabled || comment.trim().length < 2}
+					onClick={onPostComment}
+					className="h-10 w-fit bg-[#11110d] text-white hover:bg-[#14876d]"
+				>
+					<ChatText className="size-4" />
+					Post comment
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+function GroupReportPanel({ report }: { report: GroupReport }) {
+	return (
+		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+			<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+				group understanding
+			</p>
+			<div className="mt-5 grid grid-cols-3 gap-2">
+				<MiniMetric label="answers" value={report.answerCount} />
+				<MiniMetric label="clear" value={report.clearCount} />
+				<MiniMetric label="weak" value={report.weakSections.length} />
+			</div>
+			<p className="mt-5 text-sm leading-7 text-[#5d574a]">{report.summary}</p>
+			{report.featured.length ? (
+				<div className="mt-5 grid gap-2">
+					<p className="text-xs font-bold uppercase tracking-[0.12em] text-[#14876d]">
+						best answers
+					</p>
+					{report.featured.slice(0, 3).map((response) => (
+						<p
+							key={response.id}
+							className="border border-[#17140f]/10 bg-[#f9f6ef] p-3 text-sm leading-6 text-[#5d574a]"
+						>
+							{response.responderName || "Reader"}: {response.answer}
+						</p>
+					))}
+				</div>
+			) : null}
 		</div>
 	);
 }
@@ -600,6 +1107,79 @@ function buildResponseMap(responses: ResponseRecord[]) {
 	}
 
 	return mapped;
+}
+
+function buildParticipantProgress(
+	responses: ResponseRecord[],
+	chunkCount: number,
+): ParticipantProgress[] {
+	const byReader = new Map<string, Map<string, ResponseRecord>>();
+
+	for (const response of responses) {
+		const chunkId = response.chunk?.id;
+		if (!chunkId) continue;
+		const readerName =
+			response.responderName || response.responder?.name || "Reader";
+		const reader =
+			byReader.get(readerName) ?? new Map<string, ResponseRecord>();
+		const previous = reader.get(chunkId);
+		if (
+			!previous ||
+			Number(response.createdAt ?? 0) > Number(previous.createdAt ?? 0)
+		) {
+			reader.set(chunkId, response);
+		}
+		byReader.set(readerName, reader);
+	}
+
+	return [...byReader.entries()]
+		.map(([name, latestByChunk]) => {
+			const clear = [...latestByChunk.values()].filter(
+				(response) => response.grade === "clear",
+			).length;
+			const total = Math.max(chunkCount, 1);
+			return {
+				clear,
+				name,
+				percent: Math.round((clear / total) * 100),
+				total,
+			};
+		})
+		.sort((a, b) => b.clear - a.clear || a.name.localeCompare(b.name));
+}
+
+function buildGroupReport(
+	chunks: ChunkRecord[],
+	responses: ResponseRecord[],
+): GroupReport {
+	const answerCount = responses.length;
+	const clearCount = responses.filter(
+		(response) => response.grade === "clear",
+	).length;
+	const weakSections = chunks
+		.filter((chunk) =>
+			responses.some(
+				(response) =>
+					response.chunk?.id === chunk.id && response.grade !== "clear",
+			),
+		)
+		.map((chunk) => chunk.index + 1);
+	const featured = responses.filter((response) => response.isFeatured);
+	const summary = answerCount
+		? `${clearCount}/${answerCount} submitted answers are clear. ${
+				weakSections.length
+					? `The group should revisit section${weakSections.length === 1 ? "" : "s"} ${weakSections.join(", ")}.`
+					: "No weak section has surfaced yet."
+			}`
+		: "No group answers yet. Shared understanding appears as readers submit checkpoints.";
+
+	return {
+		answerCount,
+		clearCount,
+		featured,
+		summary,
+		weakSections,
+	};
 }
 
 function AuthRequired() {
@@ -697,11 +1277,18 @@ type SessionData = {
 };
 
 type SessionRecord = {
+	access?: SessionAccess;
+	comments?: CommentRecord[];
 	id: string;
 	completedAt?: number | Date;
 	currentChunkIndex?: number;
+	facilitatorNote?: string;
+	groupCurrentChunkIndex?: number;
 	mode: "light" | "serious" | "brutal";
 	post?: {
+		author?: {
+			id: string;
+		};
 		chunks?: ChunkRecord[];
 		title?: string;
 	};
@@ -709,6 +1296,9 @@ type SessionRecord = {
 	status: "active" | "completed";
 	understandingReport?: {
 		id?: string;
+	};
+	user?: {
+		id: string;
 	};
 };
 
@@ -727,11 +1317,26 @@ type ResponseRecord = {
 	createdAt?: number | Date;
 	feedback?: string;
 	grade: "clear" | "vague" | "incorrect";
+	isFeatured?: boolean;
 	responderName?: string;
 	responder?: {
 		id?: string;
 		name?: string;
 	};
+};
+
+type CommentRecord = {
+	id: string;
+	author?: {
+		id?: string;
+		name?: string;
+	};
+	authorName?: string;
+	body: string;
+	chunk?: {
+		id: string;
+	};
+	createdAt?: number | Date;
 };
 
 type PresencePerson = {
@@ -740,4 +1345,23 @@ type PresencePerson = {
 	email?: string;
 	id?: string;
 	name?: string;
+	progress?: number;
+	status?: string;
 };
+
+type ParticipantProgress = {
+	clear: number;
+	name: string;
+	percent: number;
+	total: number;
+};
+
+type GroupReport = {
+	answerCount: number;
+	clearCount: number;
+	featured: ResponseRecord[];
+	summary: string;
+	weakSections: number[];
+};
+
+type SessionAccess = "private" | "invite" | "public";

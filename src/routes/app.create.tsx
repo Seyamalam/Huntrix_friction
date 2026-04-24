@@ -113,8 +113,10 @@ function CreatePostPage() {
 					.link({ author: auth.user.id }),
 				db.tx.readingSessions[sessionId]
 					.update({
+						access: visibility === "private" ? "private" : "invite",
 						createdAt: now,
 						currentChunkIndex: 0,
+						groupCurrentChunkIndex: 0,
 						mode,
 						status: "active",
 					})

@@ -281,8 +281,10 @@ function PostCard({ post, userId }: { post: PostRecord; userId: string }) {
 			await db.transact(
 				db.tx.readingSessions[sessionId]
 					.update({
+						access: post.visibility === "private" ? "private" : "invite",
 						createdAt: Date.now(),
 						currentChunkIndex: 0,
+						groupCurrentChunkIndex: 0,
 						mode: "serious",
 						status: "active",
 					})

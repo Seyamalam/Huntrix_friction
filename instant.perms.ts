@@ -22,9 +22,9 @@ const rules = {
 	},
 	readingSessions: {
 		allow: {
-			view: "auth.id in data.ref('user.id') || 'public' in data.ref('post.visibility') || 'unlisted' in data.ref('post.visibility') || auth.id in data.ref('post.author.id')",
+			view: "auth.id in data.ref('user.id') || data.access == 'invite' || data.access == 'public' || 'public' in data.ref('post.visibility') || 'unlisted' in data.ref('post.visibility') || auth.id in data.ref('post.author.id')",
 			create: "auth.id != null",
-			update: "auth.id in data.ref('user.id') || 'public' in data.ref('post.visibility') || 'unlisted' in data.ref('post.visibility') || auth.id in data.ref('post.author.id')",
+			update: "auth.id in data.ref('user.id') || auth.id in data.ref('post.author.id')",
 			delete: "auth.id in data.ref('user.id')",
 		},
 	},
@@ -38,17 +38,25 @@ const rules = {
 	},
 	responses: {
 		allow: {
-			view: "auth.id in data.ref('session.user.id') || 'public' in data.ref('session.post.visibility') || 'unlisted' in data.ref('session.post.visibility') || auth.id in data.ref('session.post.author.id')",
+			view: "auth.id in data.ref('session.user.id') || 'invite' in data.ref('session.access') || 'public' in data.ref('session.access') || 'public' in data.ref('session.post.visibility') || 'unlisted' in data.ref('session.post.visibility') || auth.id in data.ref('session.post.author.id')",
 			create: "auth.id != null",
 			update: "auth.id in data.ref('session.user.id') || auth.id in data.ref('responder.id')",
 			delete: "auth.id in data.ref('session.user.id') || auth.id in data.ref('responder.id')",
 		},
 	},
+	sectionComments: {
+		allow: {
+			view: "auth.id in data.ref('session.user.id') || 'invite' in data.ref('session.access') || 'public' in data.ref('session.access') || 'public' in data.ref('session.post.visibility') || 'unlisted' in data.ref('session.post.visibility') || auth.id in data.ref('session.post.author.id')",
+			create: "auth.id != null",
+			update: "auth.id in data.ref('author.id')",
+			delete: "auth.id in data.ref('session.user.id') || auth.id in data.ref('author.id')",
+		},
+	},
 	understandingReports: {
 		allow: {
-			view: "auth.id in data.ref('session.user.id') || 'public' in data.ref('session.post.visibility') || 'unlisted' in data.ref('session.post.visibility') || auth.id in data.ref('session.post.author.id')",
+			view: "auth.id in data.ref('session.user.id') || 'invite' in data.ref('session.access') || 'public' in data.ref('session.access') || 'public' in data.ref('session.post.visibility') || 'unlisted' in data.ref('session.post.visibility') || auth.id in data.ref('session.post.author.id')",
 			create: "auth.id != null",
-			update: "auth.id in data.ref('session.user.id') || 'public' in data.ref('session.post.visibility') || 'unlisted' in data.ref('session.post.visibility') || auth.id in data.ref('session.post.author.id')",
+			update: "auth.id in data.ref('session.user.id') || auth.id in data.ref('session.post.author.id')",
 			delete: "auth.id in data.ref('session.user.id')",
 		},
 	},

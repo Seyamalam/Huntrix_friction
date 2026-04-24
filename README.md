@@ -1,295 +1,269 @@
-# Huntrix Friction
+Welcome to your new TanStack Start app! 
 
-Hackathon theme:
+# Getting Started
 
-> One word. Infinite interpretations. Something slows everything down. We've spent decades trying to remove it: faster payments, smoother interfaces, instant everything.
->
-> But maybe we got that wrong.
->
-> The job is not to remove friction. The job is to understand it. Build something that takes a position.
+To run this application:
 
-The best angle is not to build "an app about friction." Build a webapp that uses friction on purpose and makes a clear argument.
+```bash
+bun install
+bun --bun run dev
+```
 
-## 1. PausePost
+# Building For Production
 
-**Stance:** Social friction is sometimes necessary because instant reactions make people worse.
+To build this application for production:
 
-A webapp where users paste a tweet, comment, email, or message before posting. The app detects emotional intensity, asks one targeted question, and forces a short cooldown before revealing a better version.
+```bash
+bun --bun run build
+```
 
-MVP:
+## Testing
 
-- Paste text
-- Sentiment, toxicity, or emotion check
-- "What are you trying to achieve?" prompt
-- Rewrite options: calmer, firmer, kinder, shorter
-- Timer before copy button unlocks
+This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
 
-Demo moment:
+```bash
+bun --bun run test
+```
 
-> We added friction before communication because speed is not always clarity.
+## Styling
 
-## 2. Impulse Cart
+This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
-**Stance:** Payment friction protects people from purchases they do not actually want.
+### Removing Tailwind CSS
 
-A mock shopping cart where users add items, but instead of checkout, it asks whether they will still want the item later. It calculates impulse risk and suggests a delay.
+If you prefer not to use Tailwind CSS:
 
-MVP:
+1. Remove the demo pages in `src/routes/demo/`
+2. Replace the Tailwind import in `src/styles.css` with your own styles
+3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
+4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
 
-- Add items manually or paste product name
-- Set price, desire level, and need level
-- App assigns an impulse score
-- Creates a cooling-off list
-- Shows money "saved by friction"
+## Linting & Formatting
 
-Demo moment:
+This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
 
-> For decades we optimized one-click buying. Maybe some purchases should be two-click, two-hour, or two-day.
 
-## 3. Unread
+```bash
+bun --bun run lint
+bun --bun run format
+bun --bun run check
+```
 
-**Stance:** Cognitive friction is not a bug in learning. Struggle is how understanding forms.
 
-A reading app that intentionally slows down skim-reading. Users paste an article, and the app reveals it section by section. Before continuing, they must answer a tiny reflection question.
+# TanStack Chat Application
 
-MVP:
+Am example chat application built with TanStack Start, TanStack Store, and Claude AI.
 
-- Paste article or long text
-- Split into sections
-- After each section: "Summarize this in one sentence"
-- Unlock next section only after response
-- Final understanding map
+## .env Updates
 
-Demo moment:
+```env
+ANTHROPIC_API_KEY=your_anthropic_api_key
+```
 
-> We do not need faster reading. We need slower forgetting.
+## ✨ Features
 
-## 4. Consentful Calendar
+### AI Capabilities
+- 🤖 Powered by Claude 3.5 Sonnet 
+- 📝 Rich markdown formatting with syntax highlighting
+- 🎯 Customizable system prompts for tailored AI behavior
+- 🔄 Real-time message updates and streaming responses (coming soon)
 
-**Stance:** Scheduling friction protects attention.
+### User Experience
+- 🎨 Modern UI with Tailwind CSS and Lucide icons
+- 🔍 Conversation management and history
+- 🔐 Secure API key management
+- 📋 Markdown rendering with code highlighting
 
-A meeting request app where meetings are not instantly accepted. The requester must justify purpose, desired outcome, agenda, and why async will not work.
+### Technical Features
+- 📦 Centralized state management with TanStack Store
+- 🔌 Extensible architecture for multiple AI providers
+- 🛠️ TypeScript for type safety
 
-MVP:
+## Architecture
 
-- Create meeting request
-- Fields for purpose, decision needed, agenda, and async alternative
-- Receiver gets approve, reject, or suggest async
-- Dashboard shows hours protected
+### Tech Stack
+- **Frontend Framework**: TanStack Start
+- **Routing**: TanStack Router
+- **State Management**: TanStack Store
+- **Styling**: Tailwind CSS
+- **AI Integration**: Anthropic's Claude API
 
-Demo moment:
+## Shadcn
 
-> The problem is not that calendars are hard. The problem is that they are too easy to invade.
+Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
 
-## 5. The Friction Receipt
+```bash
+pnpm dlx shadcn@latest add button
+```
 
-**Stance:** Every "seamless" product hides costs somewhere else.
 
-A webapp where users enter a product flow like food delivery, rideshare, one-click checkout, or AI-generated essay. The app generates a friction receipt showing what friction was removed from the user and pushed onto workers, environment, attention, or trust.
+## T3Env
 
-MVP:
+- You can use T3Env to add type safety to your environment variables.
+- Add Environment variables to the `src/env.mjs` file.
+- Use the environment variables in your code.
 
-- Choose scenario
-- Answer 3 to 5 questions
-- Generate receipt with time saved, labor shifted, risk hidden, and social or environmental cost
-- Shareable receipt card
+### Usage
 
-Demo moment:
+```ts
+import { env } from "@/env";
 
-> Friction does not disappear. It moves.
+console.log(env.VITE_APP_TITLE);
+```
 
-## 6. Hard Mode Todo
 
-**Stance:** Productivity tools fail because they remove too much thinking.
 
-A todo app that refuses vague tasks. If the user types "work on project," it pushes back until the task is concrete.
 
-MVP:
 
-- Add task
-- App detects vague verbs like work, improve, fix, research
-- Asks: "What does done look like?"
-- Converts the vague task into a specific action
-- Tracks vague-to-clear transformations
 
-Demo moment:
+## Routing
 
-> The friction of defining work is the work.
+This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
 
-## 7. Argue With Me
+### Adding A Route
 
-**Stance:** Intellectual friction prevents shallow opinions.
+To add a new route to your application just add a new file in the `./src/routes` directory.
 
-A webapp where users enter an opinion, and the app forces them to argue the opposite side before publishing their stance.
+TanStack will automatically generate the content of the route file for you.
 
-MVP:
+Now that you have two routes you can use a `Link` component to navigate between them.
 
-- User writes belief
-- App asks for confidence level
-- Generates opposing argument
-- User must respond
-- Final output is a stronger position with caveats
+### Adding Links
 
-Demo moment:
+To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
 
-> We built friction into certainty.
+```tsx
+import { Link } from "@tanstack/react-router";
+```
 
-## 8. SlowChat
+Then anywhere in your JSX you can use it like so:
 
-**Stance:** Instant messaging rewards speed over care.
+```tsx
+<Link to="/about">About</Link>
+```
 
-A chat app where messages are delayed based on emotional intensity. Calm messages send instantly. Angry messages get a cooldown.
+This will create a link that will navigate to the `/about` route.
 
-MVP:
+More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
 
-- Two-person mock chat
-- Emotion score
-- Delay angry messages by 30 seconds
-- Show "rewrite to send faster"
-- Before and after conversation view
+### Using A Layout
 
-Demo moment:
+In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
 
-> The send button should not treat "thanks" and "I hate you" the same.
+Here is an example layout that includes a header:
 
-## 9. Creative Sandpaper
+```tsx
+import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 
-**Stance:** Creative friction creates better work than infinite freedom.
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'My App' },
+    ],
+  }),
+  shellComponent: ({ children }) => (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <header>
+          <nav>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+          </nav>
+        </header>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  ),
+})
+```
 
-A creative prompt app that gives users constraints instead of removing them.
+More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
 
-MVP:
+## Server Functions
 
-- Pick medium: writing, design, music, startup idea
-- App generates constraints
-- User submits output
-- App explains how the constraint shaped the work
-- Gallery of constraint-driven creations
+TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
 
-Demo moment:
+```tsx
+import { createServerFn } from '@tanstack/react-start'
 
-> Blank pages are not freedom. Constraints are handles.
+const getServerTime = createServerFn({
+  method: 'GET',
+}).handler(async () => {
+  return new Date().toISOString()
+})
 
-## 10. Friction Map
+// Use in a component
+function MyComponent() {
+  const [time, setTime] = useState('')
+  
+  useEffect(() => {
+    getServerTime().then(setTime)
+  }, [])
+  
+  return <div>Server time: {time}</div>
+}
+```
 
-**Stance:** Not all friction is bad. The problem is not knowing which friction is useful.
+## API Routes
 
-A webapp where teams map a user journey and classify each friction point as harmful, helpful, or hidden.
+You can create API routes by using the `server` property in your route definitions:
 
-MVP:
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+import { json } from '@tanstack/react-start'
 
-- Create flow steps
-- Add friction points
-- Label each one as harmful, helpful, or hidden
-- Score by pain versus value
-- Output: remove, reduce, preserve, or add friction
+export const Route = createFileRoute('/api/hello')({
+  server: {
+    handlers: {
+      GET: () => json({ message: 'Hello, World!' }),
+    },
+  },
+})
+```
 
-Demo moment:
+## Data Fetching
 
-> UX should not blindly remove friction. It should decide what friction deserves to exist.
+There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
 
-## 11. Regret Drafts
+For example:
 
-**Stance:** Some ideas should be written immediately but sent slowly.
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
 
-A private drafting app for emails, apologies, breakup texts, resignation notes, or conflict messages. It lets users write in the moment, then locks the draft until they revisit it with a calmer state.
+export const Route = createFileRoute('/people')({
+  loader: async () => {
+    const response = await fetch('https://swapi.dev/api/people')
+    return response.json()
+  },
+  component: PeopleComponent,
+})
 
-MVP:
+function PeopleComponent() {
+  const data = Route.useLoaderData()
+  return (
+    <ul>
+      {data.results.map((person) => (
+        <li key={person.name}>{person.name}</li>
+      ))}
+    </ul>
+  )
+}
+```
 
-- Choose message type
-- Write draft
-- Pick lock duration: 10 minutes, 1 hour, tomorrow
-- On unlock, app asks what changed
-- Shows original draft beside revised draft
+Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
 
-Demo moment:
+# Demo files
 
-> We separated the need to express from the decision to send.
+Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
 
-## 12. Focus Tollbooth
+# Learn More
 
-**Stance:** Cheap distractions are expensive because entering them has no cost.
+You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
 
-A webapp that adds a small intentional toll before opening distracting sites or starting low-value tasks. The toll is not money. It is a question, breath, or commitment.
-
-MVP:
-
-- User enters a distraction they want to reduce
-- Before access, app asks: "What are you avoiding?"
-- Optional 30-second wait
-- Logs avoided distractions and reclaimed time
-- Shows patterns by time of day
-
-Demo moment:
-
-> We made distraction slightly harder so intention could catch up.
-
-## 13. Proof of Effort
-
-**Stance:** AI makes output cheap, so effort needs a new signal.
-
-A webapp where users submit a piece of work and build an effort trail: rough notes, decisions, failed attempts, sources, and revisions. The final output is paired with a visible process receipt.
-
-MVP:
-
-- Create project
-- Add notes, drafts, references, and decisions
-- Timeline view
-- Generate proof-of-effort card
-- Share final work plus process trail
-
-Demo moment:
-
-> When perfect output becomes instant, the process becomes the proof.
-
-## 14. Awkward Room
-
-**Stance:** Social friction is how strangers become a group.
-
-A webapp for small teams or event attendees that intentionally creates low-stakes awkwardness: weird prompts, paired questions, and tiny shared tasks that make people interact beyond polished introductions.
-
-MVP:
-
-- Create room
-- Join with name
-- Random pair or group prompts
-- Timed awkward task
-- End with a shared inside-joke board
-
-Demo moment:
-
-> We did not remove awkwardness. We used it as the bridge.
-
-## 15. The Slow Button
-
-**Stance:** If an action has consequences, speed should be earned.
-
-A UI experiment where dangerous or meaningful actions require increasing levels of friction. Deleting a note is easy. Deleting a project requires reflection. Deleting an account requires proof of intent.
-
-MVP:
-
-- Demo app with actions of different severity
-- Friction scales by consequence
-- Low-risk actions are instant
-- High-risk actions require wait, explanation, or confirmation
-- Visualizes a "consequence ladder"
-
-Demo moment:
-
-> The same confirmation modal should not guard every decision. Friction should match consequence.
-
-## Best Bets
-
-If we want the strongest hackathon pitch:
-
-- **The Friction Receipt:** best philosophical stance.
-- **PausePost or SlowChat:** easiest emotional live demo.
-- **Impulse Cart:** most practical and relatable.
-- **Friction Map:** most directly aligned with the theme.
-
-Possible one-liners:
-
-- **The Friction Receipt:** A webapp that shows where "seamless" experiences displaced friction instead of eliminating it.
-- **PausePost:** A social writing tool that adds a moment of resistance before users say something they might regret.
-- **Impulse Cart:** A checkout experience that protects people from buying faster than they can think.
-- **Friction Map:** A UX tool that helps teams decide which friction to remove, reduce, preserve, or add.
+For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).

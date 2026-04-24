@@ -158,7 +158,7 @@ function HomePage() {
 	}
 
 	return (
-		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-ink)] text-[var(--unread-paper)]">
+		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-paper)] text-[var(--unread-ink)]">
 			<div className="unread-texture fixed inset-0 z-0 opacity-100" />
 
 			<section className="unread-shell relative z-10 grid gap-10 pb-14 pt-32 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-end lg:pt-40">
@@ -167,7 +167,7 @@ function HomePage() {
 					<h1 className="mt-7 max-w-6xl text-[clamp(3.4rem,9vw,8.6rem)] font-black leading-[0.78] text-balance">
 						Read slower. Ship understanding faster.
 					</h1>
-					<p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--unread-muted)]">
+					<p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--unread-ink-soft)]">
 						Unread turns hard text into a locked reading room: one section, one
 						checkpoint, one proof of comprehension at a time.
 					</p>
@@ -176,7 +176,7 @@ function HomePage() {
 							href="#reader"
 							className={cn(
 								buttonVariants({ size: "lg" }),
-								"h-12 bg-[var(--unread-paper)] px-5 text-[var(--unread-ink)] hover:bg-[var(--unread-gold)]",
+								"h-12 bg-[var(--unread-ink)] px-5 text-[var(--unread-paper)] hover:bg-[var(--unread-gold)]",
 							)}
 						>
 							Start a room
@@ -186,7 +186,7 @@ function HomePage() {
 							to="/blogs"
 							className={cn(
 								buttonVariants({ variant: "outline", size: "lg" }),
-								"h-12 border-white/30 bg-white/[0.045] px-5 text-white hover:bg-white/12 hover:text-white",
+								"h-12 border-[var(--unread-ink)]/30 bg-[var(--unread-ink)]/[0.045] px-5 text-[var(--unread-ink)] hover:bg-[var(--unread-ink)]/12 hover:text-[var(--unread-ink)]",
 							)}
 						>
 							Browse posts
@@ -194,10 +194,10 @@ function HomePage() {
 					</div>
 				</div>
 
-				<aside className="unread-panel bg-[var(--unread-paper)] p-5 text-[var(--unread-ink)]">
-					<div className="unread-inset-grid border border-[var(--unread-ink)]/10 p-4">
+				<aside className="unread-panel bg-[var(--unread-ink)] p-5 text-[var(--unread-paper)]">
+					<div className="unread-inset-grid border border-[var(--unread-paper)]/10 p-4">
 						<div className="flex items-center justify-between">
-							<span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--unread-ink-soft)]">
+							<span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--unread-muted)]">
 								live room
 							</span>
 							<span className="h-2 w-16 bg-[var(--unread-green)]" />
@@ -220,7 +220,7 @@ function HomePage() {
 					return (
 						<div
 							key={item.label}
-							className="border border-white/10 bg-white/[0.055] p-4 transition duration-300 hover:-translate-y-1 hover:bg-white/[0.085]"
+							className="border border-[var(--unread-ink)]/10 bg-[var(--unread-ink)]/[0.055] p-4 transition duration-300 hover:-translate-y-1 hover:bg-[var(--unread-ink)]/[0.085]"
 						>
 							<Icon className="size-6 text-[var(--unread-gold)]" />
 							<p className="mt-8 text-2xl font-black leading-none">
@@ -259,7 +259,7 @@ function HomePage() {
 									<Textarea
 										value={sourceText}
 										onChange={(event) => setSourceText(event.target.value)}
-										className="min-h-72 border-[var(--unread-ink)]/14 bg-white/80 text-sm leading-6 text-[var(--unread-ink)] placeholder:text-[var(--unread-ink-soft)]"
+										className="min-h-72 border-[var(--unread-ink)]/14 bg-[var(--unread-paper)] text-sm leading-6 text-[var(--unread-ink)] placeholder:text-[var(--unread-ink-soft)]"
 										placeholder="Paste an essay, memo, article, paper excerpt, or draft..."
 									/>
 									<FieldDescription className="text-[var(--unread-ink-soft)]">
@@ -268,7 +268,7 @@ function HomePage() {
 									</FieldDescription>
 								</Field>
 								{setupError ? (
-									<Alert className="border-[var(--unread-clay)]/35 bg-[#fff7ef] text-[var(--unread-ink)]">
+									<Alert className="border-[var(--unread-clay)]/35 bg-[var(--unread-alert-error)] text-[var(--unread-ink)]">
 										<WarningCircle className="size-4 text-[var(--unread-clay)]" />
 										<AlertTitle>Need more text</AlertTitle>
 										<AlertDescription>{setupError}</AlertDescription>
@@ -286,7 +286,7 @@ function HomePage() {
 											<TabsTrigger
 												key={frictionMode.value}
 												value={frictionMode.value}
-												className="text-[var(--unread-ink-soft)] hover:bg-white/70 data-active:bg-[var(--unread-ink)] data-active:text-white"
+												className="text-[var(--unread-ink-soft)] hover:bg-[var(--unread-ink)]/10 data-active:bg-[var(--unread-ink)] data-active:text-[var(--unread-paper)]"
 											>
 												{frictionMode.title}
 											</TabsTrigger>
@@ -297,7 +297,7 @@ function HomePage() {
 											key={frictionMode.value}
 											value={frictionMode.value}
 										>
-											<div className="border border-[var(--unread-ink)]/12 bg-white/65 p-4">
+											<div className="border border-[var(--unread-ink)]/12 bg-[var(--unread-paper)] p-4">
 												<p className="text-xl font-black">
 													{frictionMode.title}
 												</p>
@@ -323,7 +323,7 @@ function HomePage() {
 										type="button"
 										size="lg"
 										onClick={createReadingRoom}
-										className="h-12 bg-[var(--unread-ink)] text-white hover:bg-[var(--unread-green)]"
+										className="h-12 bg-[var(--unread-ink)] text-[var(--unread-paper)] hover:bg-[var(--unread-green)] hover:text-white"
 									>
 										Create reading room
 										<ArrowRight className="size-4" />
@@ -364,7 +364,7 @@ function HomePage() {
 
 function HeroMetric({ label, value }: { label: string; value: number }) {
 	return (
-		<div className="bg-white/70 p-3">
+		<div className="bg-[var(--unread-paper-2)] p-3 text-[var(--unread-ink)]">
 			<p className="font-mono text-3xl font-black tabular-nums">{value}</p>
 			<p className="text-xs font-semibold text-[var(--unread-ink-soft)]">
 				{label}
@@ -405,7 +405,7 @@ function ReaderPanel({
 						One section visible. Everything after it is locked.
 					</p>
 				</div>
-				<Badge className="rounded-none bg-white text-[var(--unread-green)]">
+				<Badge className="rounded-none bg-[var(--unread-paper)] text-[var(--unread-green)]">
 					{chunks.length
 						? `Section ${currentIndex + 1}/${chunks.length}`
 						: "No room yet"}
@@ -423,7 +423,7 @@ function ReaderPanel({
 				<div className="mt-5 grid gap-4">
 					<div className="bg-[var(--unread-paper)] p-5 text-[var(--unread-ink)]">
 						<div className="flex flex-wrap gap-2">
-							<Badge className="rounded-none bg-[var(--unread-ink)] text-white">
+							<Badge className="rounded-none bg-[var(--unread-ink)] text-[var(--unread-paper)]">
 								visible now
 							</Badge>
 							<Badge className="rounded-none bg-[var(--unread-gold)] text-[var(--unread-ink)]">
@@ -445,7 +445,7 @@ function ReaderPanel({
 						<Textarea
 							value={answer}
 							onChange={(event) => setAnswer(event.target.value)}
-							className="min-h-28 border-white/25 bg-white text-sm leading-6 text-[var(--unread-ink)] placeholder:text-[var(--unread-ink-soft)]"
+							className="min-h-28 border-[var(--unread-ink)]/25 bg-[var(--unread-paper)] text-sm leading-6 text-[var(--unread-ink)] placeholder:text-[var(--unread-ink-soft)]"
 							placeholder="One precise sentence is enough."
 						/>
 					</Field>
@@ -456,7 +456,7 @@ function ReaderPanel({
 							size="lg"
 							onClick={onSubmit}
 							disabled={answer.trim().length < 6}
-							className="h-12 bg-white px-5 text-[var(--unread-green)] hover:bg-[var(--unread-gold)]"
+							className="h-12 bg-[var(--unread-paper)] px-5 text-[var(--unread-green)] hover:bg-[var(--unread-gold)] hover:text-[var(--unread-paper)]"
 						>
 							Check reflection
 						</Button>
@@ -476,10 +476,10 @@ function ReaderPanel({
 					{currentResponse ? (
 						<Alert
 							className={cn(
-								"border-white/20 text-[var(--unread-ink)]",
+								"border-[var(--unread-ink)]/10 text-[var(--unread-ink)]",
 								currentResponse.grade === "clear"
-									? "bg-[#effaf2]"
-									: "bg-[#fff4ed]",
+									? "bg-[var(--unread-alert-success)]"
+									: "bg-[var(--unread-alert-error)]",
 							)}
 						>
 							{currentResponse.grade === "clear" ? (
@@ -540,7 +540,7 @@ function ReportPanel({
 				to="/login"
 				className={cn(
 					buttonVariants({ size: "lg" }),
-					"mt-6 h-12 w-full bg-[var(--unread-ink)] text-white hover:bg-[var(--unread-green)]",
+					"mt-6 h-12 w-full bg-[var(--unread-ink)] text-[var(--unread-paper)] hover:bg-[var(--unread-green)] hover:text-white",
 				)}
 			>
 				Save with auth

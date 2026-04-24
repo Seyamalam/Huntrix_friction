@@ -94,13 +94,13 @@ export default function ThemeToggle() {
 
 			<DropdownMenuContent
 				align="end"
-				className="border-[#17140f]/12 bg-[#f7f2e8] text-[#17140f]"
+				className="border-[var(--unread-ink)]/12 bg-[var(--unread-paper)] text-[var(--unread-ink)]"
 			>
 				{THEME_MODES.map((themeMode) => (
 					<DropdownMenuItem
 						key={themeMode}
 						onClick={() => toggleMode(themeMode)}
-						className="capitalize text-[#17140f] hover:bg-[#17140f]/8 hover:text-[#17140f]"
+						className="capitalize text-[var(--unread-ink)] hover:bg-[var(--unread-ink)]/8 hover:text-[var(--unread-ink)]"
 					>
 						{themeMode}
 					</DropdownMenuItem>

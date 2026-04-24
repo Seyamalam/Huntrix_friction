@@ -61,7 +61,7 @@
     --secondary: oklch(0.963 0.002 197.1);
     --secondary-foreground: oklch(0.218 0.008 223.9);
     --muted: oklch(0.963 0.002 197.1);
-    --muted-foreground: oklch(0.56 0.021 213.5);
+    --muted-foreground: oklch(0.42 0.018 213.5);
     --accent: oklch(0.963 0.002 197.1);
     --accent-foreground: oklch(0.218 0.008 223.9);
     --destructive: oklch(0.577 0.245 27.325);
@@ -143,10 +143,31 @@
     --unread-ink-soft: #5d574a;
     --unread-paper: #f4efe4;
     --unread-paper-2: #e9ddc8;
-    --unread-muted: #d6cbbb;
+    --unread-muted: #8f8070;
     --unread-gold: #d0aa57;
     --unread-green: #14876d;
     --unread-clay: #a75d3f;
+    --unread-alert-error: #fff7ef;
+    --unread-alert-success: #effaf2;
+
+    /* Header colors: always dark chrome, never swap */
+    --header-bg: #11110d;
+    --header-text: #f4efe4;
+    --header-muted: #d6cbbb;
+}
+
+.dark {
+    --unread-ink: #f4efe4;
+    --unread-ink-2: #e9ddc8;
+    --unread-ink-soft: #b8b0a2;
+    --unread-paper: #11110d;
+    --unread-paper-2: #1b1a15;
+    --unread-muted: #5d574a;
+    --unread-gold: #d0aa57;
+    --unread-green: #14876d;
+    --unread-clay: #c97a56;
+    --unread-alert-error: color-mix(in srgb, var(--unread-clay) 15%, var(--unread-paper));
+    --unread-alert-success: color-mix(in srgb, var(--unread-green) 15%, var(--unread-paper));
 }
 
 @layer utilities {
@@ -164,24 +185,24 @@
         border-radius: 0;
         border-color: color-mix(in srgb, var(--unread-gold) 42%, transparent);
         background: color-mix(in srgb, var(--unread-gold) 13%, transparent);
-        color: #efd78f;
+        color: var(--unread-gold);
         letter-spacing: 0.12em;
         text-transform: uppercase;
     }
 
     .unread-texture {
         background-image:
-            linear-gradient(rgba(244, 239, 228, 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(244, 239, 228, 0.06) 1px, transparent 1px),
-            radial-gradient(circle at 30% 8%, rgba(208, 170, 87, 0.12), transparent 34%),
-            linear-gradient(135deg, rgba(255, 255, 255, 0.045), transparent 46%);
+            linear-gradient(color-mix(in srgb, var(--unread-ink) 6%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--unread-ink) 6%, transparent) 1px, transparent 1px),
+            radial-gradient(circle at 30% 8%, color-mix(in srgb, var(--unread-gold) 12%, transparent), transparent 34%),
+            linear-gradient(135deg, color-mix(in srgb, var(--unread-ink) 4.5%, transparent), transparent 46%);
         background-size: 72px 72px, 72px 72px, 100% 100%, 100% 100%;
     }
 
     .unread-inset-grid {
         background-image:
-            linear-gradient(rgba(17, 17, 13, 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(17, 17, 13, 0.06) 1px, transparent 1px);
+            linear-gradient(color-mix(in srgb, var(--unread-paper) 6%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--unread-paper) 6%, transparent) 1px, transparent 1px);
         background-size: 28px 28px;
     }
 }

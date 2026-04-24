@@ -201,7 +201,7 @@ function LoginExperience() {
 						<h1 className="mt-7 max-w-6xl text-[clamp(3.2rem,8vw,7.2rem)] leading-[0.86] font-black tracking-normal text-balance">
 							Get in fast. Get through the text slowly.
 						</h1>
-						<p className="mt-7 max-w-2xl text-base leading-8 text-[#d9d0c1]/76 sm:text-lg">
+						<p className="mt-7 max-w-2xl text-base leading-8 text-[#d9d0c1]/86 sm:text-lg">
 							Unread keeps authentication out of the way, then asks readers to
 							prove the argument before the next section appears.
 						</p>
@@ -250,7 +250,7 @@ function LoginExperience() {
 									<CardTitle className="text-3xl leading-none font-black">
 										{panel.title}
 									</CardTitle>
-									<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#5e5648]">
+									<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#4a4136]">
 										{panel.body}
 									</CardDescription>
 								</CardHeader>
@@ -323,10 +323,17 @@ function AuthPanel({
 
 	if (auth.error) {
 		return (
-			<Alert variant="destructive" className="bg-[#f7f2e8]">
+			<Alert
+				variant="destructive"
+				className="border-[#7f1d1d]/25 bg-[#f7f2e8] text-[#7f1d1d]"
+			>
 				<WarningCircle className="size-4" />
-				<AlertTitle>Auth connection failed</AlertTitle>
-				<AlertDescription>{auth.error.message}</AlertDescription>
+				<AlertTitle className="text-[#7f1d1d]">
+					Auth connection failed
+				</AlertTitle>
+				<AlertDescription className="text-[#7f1d1d]">
+					{auth.error.message}
+				</AlertDescription>
 			</Alert>
 		);
 	}
@@ -341,7 +348,7 @@ function AuthPanel({
 					<CardTitle className="max-w-sm text-4xl leading-none font-black">
 						Your reading room is open.
 					</CardTitle>
-					<CardDescription className="pt-2 text-sm text-[#5e5648]">
+					<CardDescription className="pt-2 text-sm text-[#4a4136]">
 						{auth.user.email}
 					</CardDescription>
 				</CardHeader>
@@ -368,7 +375,7 @@ function AuthPanel({
 				<CardTitle className="text-4xl leading-none font-black">
 					Enter Unread
 				</CardTitle>
-				<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#5e5648]">
+				<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#4a4136]">
 					Magic codes keep sign-in short. The hard part starts after the text
 					appears.
 				</CardDescription>
@@ -380,17 +387,17 @@ function AuthPanel({
 							<Field>
 								<FieldLabel>Email</FieldLabel>
 								<div className="flex items-center border border-[#17140f]/15 bg-white/70 px-3">
-									<EnvelopeSimple className="size-5 text-[#5e5648]" />
+									<EnvelopeSimple className="size-5 text-[#4a4136]" />
 									<Input
 										required
 										type="email"
 										value={email}
 										onChange={(event) => setEmail(event.target.value)}
 										placeholder="reader@unread.app"
-										className="h-12 border-0 bg-transparent text-base shadow-none ring-0 focus-visible:border-0 focus-visible:ring-0"
+										className="h-12 border-0 bg-transparent text-base text-[#17140f] shadow-none ring-0 placeholder:text-[#6b6254] focus-visible:border-0 focus-visible:ring-0"
 									/>
 								</div>
-								<FieldDescription>
+								<FieldDescription className="text-[#4a4136]">
 									We will send a one-time code to this address.
 								</FieldDescription>
 							</Field>
@@ -426,7 +433,7 @@ function AuthPanel({
 										))}
 									</InputOTPGroup>
 								</InputOTP>
-								<FieldDescription>
+								<FieldDescription className="text-[#4a4136]">
 									Check the inbox for {email}. Codes expire quickly.
 								</FieldDescription>
 							</Field>
@@ -442,7 +449,7 @@ function AuthPanel({
 							<Button
 								type="button"
 								variant="ghost"
-								className="h-10 text-[#5e5648] hover:bg-[#17140f]/8 hover:text-[#17140f]"
+								className="h-10 text-[#4a4136] hover:bg-[#17140f]/8 hover:text-[#17140f]"
 								onClick={() => setStep("email")}
 							>
 								Use a different email
@@ -474,7 +481,7 @@ function InstantSetupPage() {
 					<CardTitle className="max-w-2xl pt-5 text-[clamp(2.6rem,6vw,5rem)] leading-[0.9] font-black">
 						Add your Instant app id to unlock auth.
 					</CardTitle>
-					<CardDescription className="max-w-xl pt-3 text-sm leading-7 text-[#5e5648]">
+					<CardDescription className="max-w-xl pt-3 text-sm leading-7 text-[#4a4136]">
 						The schema and permission files are in place. Set the Vite app id
 						from your Instant project, then reload the dev server.
 					</CardDescription>

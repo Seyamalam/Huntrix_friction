@@ -48,7 +48,7 @@ function NotFoundPage() {
 				<h1 className="mt-5 max-w-4xl text-[clamp(3rem,8vw,7rem)] leading-[0.88] font-black text-balance">
 					This page has not earned a section yet.
 				</h1>
-				<p className="mt-7 max-w-xl text-base leading-8 text-[#d9d0c1]/76">
+				<p className="mt-7 max-w-xl text-base leading-8 text-[#d9d0c1]/86">
 					The route you opened does not exist in Unread. Go back to the main
 					reading room and continue from a known checkpoint.
 				</p>

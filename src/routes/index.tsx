@@ -105,7 +105,7 @@ function HomePage() {
 						<h1 className="mt-7 max-w-6xl text-[clamp(3.4rem,8vw,7.7rem)] leading-[0.84] font-black tracking-normal text-balance">
 							Read the part you were about to fake.
 						</h1>
-						<p className="mt-7 max-w-2xl text-base leading-8 text-[#d9d0c1]/76 sm:text-lg">
+						<p className="mt-7 max-w-2xl text-base leading-8 text-[#d9d0c1]/86 sm:text-lg">
 							Unread turns difficult text into locked sections, short reflection
 							checks, and evidence that the idea actually landed.
 						</p>
@@ -124,7 +124,7 @@ function HomePage() {
 								to="/blogs"
 								className={cn(
 									buttonVariants({ variant: "outline", size: "lg" }),
-									"h-12 border-[#f7f2e8]/25 bg-transparent px-5 text-[#f7f2e8] hover:bg-[#f7f2e8]/10",
+									"h-12 border-[#f7f2e8]/45 bg-transparent px-5 text-[#f7f2e8] hover:bg-[#f7f2e8]/14 hover:text-white",
 								)}
 							>
 								Browse public posts
@@ -156,10 +156,12 @@ function HomePage() {
 									{() => "43%"}
 								</ProgressValue>
 							</Progress>
-							<Alert className="border-[#17140f]/12 bg-white/65">
+							<Alert className="border-[#17140f]/18 bg-white/80 text-[#17140f]">
 								<WarningCircle className="size-4 text-[#b45b32]" />
-								<AlertTitle>Checkpoint pending</AlertTitle>
-								<AlertDescription>
+								<AlertTitle className="text-[#17140f]">
+									Checkpoint pending
+								</AlertTitle>
+								<AlertDescription className="text-[#4a4136]">
 									Explain why the author thinks speed hides weak comprehension.
 								</AlertDescription>
 							</Alert>
@@ -200,7 +202,7 @@ function HomePage() {
 									<CardTitle className="text-2xl leading-none font-black">
 										{step.title}
 									</CardTitle>
-									<CardDescription className="pt-2 text-sm leading-6 text-[#d9d0c1]/68">
+									<CardDescription className="pt-2 text-sm leading-6 text-[#d9d0c1]/84">
 										{step.body}
 									</CardDescription>
 								</CardHeader>
@@ -216,7 +218,7 @@ function HomePage() {
 						<h2 className="max-w-3xl text-[clamp(2.6rem,6vw,6rem)] leading-[0.88] font-black text-balance">
 							The feed is gone. The proof remains.
 						</h2>
-						<p className="mt-6 max-w-xl text-base leading-8 text-[#d9d0c1]/72">
+						<p className="mt-6 max-w-xl text-base leading-8 text-[#d9d0c1]/86">
 							Unread is not a place to skim. It is a place to publish and read
 							work where comprehension is visible.
 						</p>
@@ -234,16 +236,20 @@ function HomePage() {
 							</CardHeader>
 							<CardContent>
 								<Tabs defaultValue="serious">
-									<TabsList className="bg-[#17140f]/8">
+									<TabsList className="bg-[#17140f]/10">
 										{frictionModes.map((mode) => (
-											<TabsTrigger key={mode.value} value={mode.value}>
+											<TabsTrigger
+												key={mode.value}
+												value={mode.value}
+												className="text-[#4a4136] hover:bg-[#17140f]/8 hover:text-[#17140f] data-active:bg-[#17140f] data-active:text-white"
+											>
 												{mode.title}
 											</TabsTrigger>
 										))}
 									</TabsList>
 									{frictionModes.map((mode) => (
 										<TabsContent key={mode.value} value={mode.value}>
-											<div className="mt-4 border border-[#17140f]/10 bg-white/65 p-4">
+											<div className="mt-4 border border-[#17140f]/14 bg-white/82 p-4 text-[#17140f]">
 												<p className="text-lg font-black">{mode.title}</p>
 												<p className="mt-2 max-w-md text-sm leading-6 text-[#5e5648]">
 													{mode.body}
@@ -252,7 +258,7 @@ function HomePage() {
 													<ProgressLabel className="font-semibold">
 														Friction level
 													</ProgressLabel>
-													<ProgressValue>
+													<ProgressValue className="text-[#4a4136]">
 														{() => `${mode.progress}%`}
 													</ProgressValue>
 												</Progress>
@@ -268,7 +274,7 @@ function HomePage() {
 								<CardTitle className="text-3xl leading-none font-black">
 									Author evidence
 								</CardTitle>
-								<CardDescription className="text-sm leading-6 text-white/72">
+								<CardDescription className="text-sm leading-6 text-white/86">
 									Not views. Not likes. Signals that readers wrestled with the
 									text.
 								</CardDescription>
@@ -277,9 +283,9 @@ function HomePage() {
 								<Table>
 									<TableHeader>
 										<TableRow className="border-white/18 hover:bg-transparent">
-											<TableHead className="text-white/72">Metric</TableHead>
-											<TableHead className="text-white/72">Now</TableHead>
-											<TableHead className="text-white/72">Delta</TableHead>
+											<TableHead className="text-white/90">Metric</TableHead>
+											<TableHead className="text-white/90">Now</TableHead>
+											<TableHead className="text-white/90">Delta</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>

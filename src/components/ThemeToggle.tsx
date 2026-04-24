@@ -78,7 +78,7 @@ export default function ThemeToggle() {
 			<DropdownMenuTrigger
 				className={cn(
 					buttonVariants({ variant: "secondary" }),
-					"border border-primary bg-transparent absolute bottom-5 right-5 z-50",
+					"absolute right-5 bottom-5 z-50 border border-[#f7f2e8]/25 bg-[#12110d] text-[#f7f2e8] shadow-lg shadow-black/25 hover:bg-[#2a8f78] hover:text-white",
 				)}
 			>
 				<SunIcon className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 sm:h-6 sm:w-6" />
@@ -86,12 +86,15 @@ export default function ThemeToggle() {
 				<span className="sr-only">Toggle theme</span>
 			</DropdownMenuTrigger>
 
-			<DropdownMenuContent align="end">
+			<DropdownMenuContent
+				align="end"
+				className="border-[#17140f]/12 bg-[#f7f2e8] text-[#17140f]"
+			>
 				{THEME_MODES.map((themeMode) => (
 					<DropdownMenuItem
 						key={themeMode}
 						onClick={() => toggleMode(themeMode)}
-						className="capitalize"
+						className="capitalize text-[#17140f] hover:bg-[#17140f]/8 hover:text-[#17140f]"
 					>
 						{themeMode}
 					</DropdownMenuItem>

@@ -31,7 +31,7 @@ export default function Header() {
 						<span className="block text-lg leading-none font-black tracking-normal">
 							Unread
 						</span>
-						<span className="hidden text-xs leading-5 text-[#d9d0c1]/58 sm:block">
+						<span className="hidden text-xs leading-5 text-[#d9d0c1]/82 sm:block">
 							anti-summary reading
 						</span>
 					</span>
@@ -47,7 +47,7 @@ export default function Header() {
 							}}
 							inactiveProps={{
 								className:
-									"text-[#d9d0c1]/70 hover:bg-white/8 hover:text-white",
+									"text-[#d9d0c1]/86 hover:bg-white/10 hover:text-white",
 							}}
 							className="inline-flex h-9 items-center px-3 text-xs font-semibold transition-colors"
 						>
@@ -61,7 +61,7 @@ export default function Header() {
 						<TooltipTrigger
 							className={cn(
 								buttonVariants({ variant: "ghost", size: "sm" }),
-								"hidden h-9 border border-white/10 bg-white/[0.04] px-3 text-[#d9d0c1]/72 hover:bg-white/10 hover:text-white sm:inline-flex",
+								"hidden h-9 border border-white/16 bg-white/[0.06] px-3 text-[#f7f2e8] hover:bg-white/12 hover:text-white sm:inline-flex",
 							)}
 						>
 							<CircleNotch className="size-4 text-[#e7ce8e]" />
@@ -97,7 +97,7 @@ export default function Header() {
 								className: "bg-[#f7f2e8] text-[#17140f]",
 							}}
 							inactiveProps={{
-								className: "bg-white/[0.04] text-[#d9d0c1]/72",
+								className: "bg-white/[0.06] text-[#f7f2e8]",
 							}}
 							className="flex h-9 flex-1 items-center justify-center text-xs font-semibold"
 						>

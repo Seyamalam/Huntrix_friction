@@ -1,8 +1,15 @@
-import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+	createRootRoute,
+	HeadContent,
+	Link,
+	Scripts,
+} from "@tanstack/react-router";
 
 import Header from "@/components/Header";
 import ThemeToggle from "@/components/ThemeToggle";
+import { buttonVariants } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 import appCss from "@/styles.css?url";
 
@@ -29,8 +36,35 @@ export const Route = createRootRoute({
 			},
 		],
 	}),
+	notFoundComponent: NotFoundPage,
 	shellComponent: RootDocument,
 });
+
+function NotFoundPage() {
+	return (
+		<section className="min-h-dvh bg-[#12110d] px-4 pt-36 pb-20 text-[#f7f2e8] sm:px-6">
+			<div className="mx-auto max-w-5xl">
+				<p className="font-mono text-sm text-[#e7ce8e]">404</p>
+				<h1 className="mt-5 max-w-4xl text-[clamp(3rem,8vw,7rem)] leading-[0.88] font-black text-balance">
+					This page has not earned a section yet.
+				</h1>
+				<p className="mt-7 max-w-xl text-base leading-8 text-[#d9d0c1]/76">
+					The route you opened does not exist in Unread. Go back to the main
+					reading room and continue from a known checkpoint.
+				</p>
+				<Link
+					to="/"
+					className={cn(
+						buttonVariants({ size: "lg" }),
+						"mt-9 h-12 bg-[#f7f2e8] px-5 text-[#17140f] hover:bg-[#e7ce8e]",
+					)}
+				>
+					Return home
+				</Link>
+			</div>
+		</section>
+	);
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (

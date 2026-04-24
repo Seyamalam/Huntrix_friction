@@ -415,18 +415,17 @@ function AuthPanel({
 									value={code}
 									onChange={setCode}
 									containerClassName="gap-2"
-									render={({ slots }) => (
-										<InputOTPGroup className="gap-2">
-											{slots.map((_slot, index) => (
-												<InputOTPSlot
-													key={`slot-${index.toString(36)}`}
-													index={index}
-													className="size-12 border-[#17140f]/18 bg-white/75 text-lg font-black"
-												/>
-											))}
-										</InputOTPGroup>
-									)}
-								/>
+								>
+									<InputOTPGroup className="gap-2">
+										{[0, 1, 2, 3, 4, 5].map((index) => (
+											<InputOTPSlot
+												key={`slot-${index.toString(36)}`}
+												index={index}
+												className="size-12 border-[#17140f]/18 bg-white/75 text-lg font-black"
+											/>
+										))}
+									</InputOTPGroup>
+								</InputOTP>
 								<FieldDescription>
 									Check the inbox for {email}. Codes expire quickly.
 								</FieldDescription>

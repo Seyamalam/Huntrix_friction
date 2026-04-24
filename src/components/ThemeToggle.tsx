@@ -78,7 +78,7 @@ export default function ThemeToggle() {
 			<DropdownMenuTrigger
 				className={cn(
 					buttonVariants({ variant: "secondary" }),
-					"absolute right-5 bottom-5 z-50 border border-[#f7f2e8]/25 bg-[#12110d] text-[#f7f2e8] shadow-lg shadow-black/25 hover:bg-[#2a8f78] hover:text-white",
+					"fixed right-5 bottom-5 z-50 border border-[#f7f2e8]/25 bg-[#12110d] text-[#f7f2e8] shadow-lg shadow-black/25 hover:bg-[#2a8f78] hover:text-white",
 				)}
 			>
 				<SunIcon className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 sm:h-6 sm:w-6" />

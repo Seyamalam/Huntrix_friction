@@ -126,7 +126,7 @@ function LoginExperience() {
 	}
 
 	return (
-		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-ink)] text-[var(--unread-paper)]">
+		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-paper)] text-[var(--unread-ink)]">
 			<div className="unread-texture fixed inset-0 z-0" />
 
 			<section className="unread-shell relative z-10 pb-20 pt-32 lg:pt-40">
@@ -173,7 +173,7 @@ function LoginExperience() {
 						{proofPanels.map((panel) => (
 							<Card
 								key={panel.title}
-								className="unread-panel border-0 bg-[var(--unread-paper)] text-[var(--unread-ink)] ring-0 transition duration-300 hover:-translate-y-1 md:col-span-3 odd:md:translate-y-10"
+								className="unread-panel border-0 bg-[var(--unread-paper-2)] text-[var(--unread-ink)] ring-0 transition duration-300 hover:-translate-y-1 md:col-span-3 odd:md:translate-y-10"
 							>
 								<CardHeader>
 									<CardTitle className="text-3xl leading-none font-black">
@@ -240,7 +240,7 @@ function AuthPanel({
 }) {
 	if (auth.isLoading) {
 		return (
-			<Card className="bg-[#f7f2e8] ring-0">
+			<Card className="bg-[var(--unread-paper)] ring-0">
 				<CardHeader>
 					<Skeleton className="h-4 w-28" />
 					<Skeleton className="h-9 w-full" />
@@ -258,13 +258,13 @@ function AuthPanel({
 		return (
 			<Alert
 				variant="destructive"
-				className="border-[#7f1d1d]/25 bg-[#f7f2e8] text-[#7f1d1d]"
+				className="border-[var(--unread-clay)]/25 bg-[var(--unread-paper)] text-[var(--unread-clay)]"
 			>
 				<WarningCircle className="size-4" />
-				<AlertTitle className="text-[#7f1d1d]">
+				<AlertTitle className="text-[var(--unread-clay)]">
 					Auth connection failed
 				</AlertTitle>
-				<AlertDescription className="text-[#7f1d1d]">
+				<AlertDescription className="text-[var(--unread-clay)]">
 					{auth.error.message}
 				</AlertDescription>
 			</Alert>
@@ -273,22 +273,22 @@ function AuthPanel({
 
 	if (auth.user) {
 		return (
-			<Card className="border-0 bg-[#f7f2e8] text-[#17140f] shadow-2xl shadow-black/30 ring-0">
+			<Card className="border-0 bg-[var(--unread-paper)] text-[var(--unread-ink)] shadow-2xl shadow-black/30 ring-0">
 				<CardHeader>
 					<CardAction>
-						<Check className="size-8 text-[#2a8f78]" />
+						<Check className="size-8 text-[var(--unread-green)]" />
 					</CardAction>
 					<CardTitle className="max-w-sm text-4xl leading-none font-black">
 						Your reading room is open.
 					</CardTitle>
-					<CardDescription className="pt-2 text-sm text-[#4a4136]">
+					<CardDescription className="pt-2 text-sm text-[var(--unread-ink-soft)]">
 						{auth.user.email}
 					</CardDescription>
 				</CardHeader>
-				<CardFooter className="border-[#17140f]/10">
+				<CardFooter className="border-[var(--unread-ink)]/10">
 					<Button
 						type="button"
-						className="h-12 w-full bg-[#17140f] text-white hover:bg-[#2a8f78]"
+						className="h-12 w-full bg-[var(--unread-ink)] text-[var(--unread-paper)] hover:bg-[var(--unread-green)]"
 						onClick={() => db.auth.signOut()}
 					>
 						<SignOut className="size-4" />
@@ -300,15 +300,15 @@ function AuthPanel({
 	}
 
 	return (
-		<Card className="border-0 bg-[#f7f2e8] text-[#17140f] shadow-2xl shadow-black/30 ring-0">
+		<Card className="border-0 bg-[var(--unread-paper)] text-[var(--unread-ink)] shadow-2xl shadow-black/30 ring-0">
 			<CardHeader>
 				<CardAction>
-					<LockKey className="size-6 text-[#2a8f78]" />
+					<LockKey className="size-6 text-[var(--unread-green)]" />
 				</CardAction>
 				<CardTitle className="text-4xl leading-none font-black">
 					Enter Unread
 				</CardTitle>
-				<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[#4a4136]">
+				<CardDescription className="max-w-sm pt-2 text-sm leading-6 text-[var(--unread-ink-soft)]">
 					{isGoogleConfigured
 						? "Use Google for the quickest entry, or fall back to a magic code."
 						: "Magic codes keep sign-in short. Add Google env vars to enable OAuth."}
@@ -318,10 +318,10 @@ function AuthPanel({
 				{isGoogleConfigured ? (
 					<>
 						<GoogleSignIn setError={setError} />
-						<div className="my-5 flex items-center gap-3 text-xs font-semibold text-[#6b6254]">
-							<Separator className="flex-1 bg-[#17140f]/10" />
+						<div className="my-5 flex items-center gap-3 text-xs font-semibold text-[var(--unread-ink-soft)]">
+							<Separator className="flex-1 bg-[var(--unread-ink)]/10" />
 							<span>or use email</span>
-							<Separator className="flex-1 bg-[#17140f]/10" />
+							<Separator className="flex-1 bg-[var(--unread-ink)]/10" />
 						</div>
 					</>
 				) : null}
@@ -330,18 +330,18 @@ function AuthPanel({
 						<FieldGroup>
 							<Field>
 								<FieldLabel>Email</FieldLabel>
-								<div className="flex items-center border border-[#17140f]/15 bg-white/70 px-3">
-									<EnvelopeSimple className="size-5 text-[#4a4136]" />
+								<div className="flex items-center border border-[var(--unread-ink)]/15 bg-[var(--unread-paper)] px-3">
+									<EnvelopeSimple className="size-5 text-[var(--unread-ink-soft)]" />
 									<Input
 										required
 										type="email"
 										value={email}
 										onChange={(event) => setEmail(event.target.value)}
 										placeholder="reader@unread.app"
-										className="h-12 border-0 bg-transparent text-base text-[#17140f] shadow-none ring-0 placeholder:text-[#6b6254] focus-visible:border-0 focus-visible:ring-0"
+										className="h-12 border-0 bg-transparent text-base text-[var(--unread-ink)] shadow-none ring-0 placeholder:text-[var(--unread-ink-soft)] focus-visible:border-0 focus-visible:ring-0"
 									/>
 								</div>
-								<FieldDescription className="text-[#4a4136]">
+								<FieldDescription className="text-[var(--unread-ink-soft)]">
 									We will send a one-time code to this address.
 								</FieldDescription>
 							</Field>
@@ -349,7 +349,7 @@ function AuthPanel({
 							<Button
 								type="submit"
 								disabled={isSubmitting}
-								className="h-12 w-full bg-[#17140f] text-white hover:bg-[#2a8f78]"
+								className="h-12 w-full bg-[var(--unread-ink)] text-[var(--unread-paper)] hover:bg-[var(--unread-green)]"
 							>
 								{isSubmitting ? "Sending" : "Send magic code"}
 								<ArrowRight className="size-4" />
@@ -372,12 +372,12 @@ function AuthPanel({
 											<InputOTPSlot
 												key={`slot-${index.toString(36)}`}
 												index={index}
-												className="size-12 border-[#17140f]/18 bg-white/75 text-lg font-black"
+												className="size-12 border-[var(--unread-ink)]/18 bg-[var(--unread-paper)] text-lg font-black"
 											/>
 										))}
 									</InputOTPGroup>
 								</InputOTP>
-								<FieldDescription className="text-[#4a4136]">
+								<FieldDescription className="text-[var(--unread-ink-soft)]">
 									Check the inbox for {email}. Codes expire quickly.
 								</FieldDescription>
 							</Field>
@@ -385,7 +385,7 @@ function AuthPanel({
 							<Button
 								type="submit"
 								disabled={isSubmitting || code.length < 6}
-								className="h-12 w-full bg-[#17140f] text-white hover:bg-[#2a8f78]"
+								className="h-12 w-full bg-[var(--unread-ink)] text-[var(--unread-paper)] hover:bg-[var(--unread-green)]"
 							>
 								{isSubmitting ? "Checking" : "Verify code"}
 								<Brain className="size-4" />
@@ -393,7 +393,7 @@ function AuthPanel({
 							<Button
 								type="button"
 								variant="ghost"
-								className="h-10 text-[#4a4136] hover:bg-[#17140f]/8 hover:text-[#17140f]"
+								className="h-10 text-[var(--unread-ink-soft)] hover:bg-[var(--unread-ink)]/8 hover:text-[var(--unread-ink)]"
 								onClick={() => setStep("email")}
 							>
 								Use a different email
@@ -404,8 +404,8 @@ function AuthPanel({
 			</CardContent>
 			{status ? (
 				<>
-					<Separator className="bg-[#17140f]/10" />
-					<CardFooter className="border-0 text-sm text-[#2a8f78]">
+					<Separator className="bg-[var(--unread-ink)]/10" />
+					<CardFooter className="border-0 text-sm text-[var(--unread-green)]">
 						{status}
 					</CardFooter>
 				</>
@@ -426,7 +426,7 @@ function GoogleSignIn({ setError }: { setError: (value: string) => void }) {
 	return (
 		<div className="grid gap-3">
 			<GoogleOAuthProvider clientId={googleClientId}>
-				<div className="overflow-hidden border border-[#17140f]/15 bg-white/80 p-2">
+				<div className="overflow-hidden border border-[var(--unread-ink)]/15 bg-[var(--unread-paper)] p-2">
 					<GoogleLogin
 						nonce={nonce}
 						shape="rectangular"
@@ -460,7 +460,7 @@ function GoogleSignIn({ setError }: { setError: (value: string) => void }) {
 					/>
 				</div>
 			</GoogleOAuthProvider>
-			<p className="text-xs leading-5 text-[#6b6254]">
+			<p className="text-xs leading-5 text-[var(--unread-ink-soft)]">
 				Google OAuth is active because both Google env vars are present.
 			</p>
 		</div>
@@ -469,22 +469,22 @@ function GoogleSignIn({ setError }: { setError: (value: string) => void }) {
 
 function InstantSetupPage() {
 	return (
-		<main className="min-h-dvh overflow-x-hidden bg-[#12110d] px-4 pt-32 pb-20 text-[#f7f2e8] sm:px-6">
-			<Card className="mx-auto max-w-3xl border-0 bg-[#f7f2e8] text-[#17140f] shadow-2xl shadow-black/30 ring-0">
+		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-paper)] px-4 pt-32 pb-20 text-[var(--unread-ink)] sm:px-6">
+			<Card className="mx-auto max-w-3xl border-0 bg-[var(--unread-paper)] text-[var(--unread-ink)] shadow-2xl shadow-black/30 ring-0">
 				<CardHeader>
-					<Badge className="w-fit rounded-none bg-[#2a8f78] text-white">
+					<Badge className="w-fit rounded-none bg-[var(--unread-green)] text-white">
 						InstantDB setup
 					</Badge>
 					<CardTitle className="max-w-2xl pt-5 text-[clamp(2.6rem,6vw,5rem)] leading-[0.9] font-black">
 						Add your Instant app id to unlock auth.
 					</CardTitle>
-					<CardDescription className="max-w-xl pt-3 text-sm leading-7 text-[#4a4136]">
+					<CardDescription className="max-w-xl pt-3 text-sm leading-7 text-[var(--unread-ink-soft)]">
 						The schema and permission files are in place. Set the Vite app id
 						from your Instant project, then reload the dev server.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="border border-[#17140f]/12 bg-white/70 p-4 font-mono text-sm text-[#2a8f78]">
+					<div className="border border-[var(--unread-ink)]/12 bg-[var(--unread-paper-2)] p-4 font-mono text-sm text-[var(--unread-green)]">
 						VITE_INSTANT_APP_ID=your-instant-app-id
 					</div>
 				</CardContent>

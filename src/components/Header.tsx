@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpenText, CircleNotch } from "@phosphor-icons/react";
+import { ArrowRight, CircleNotch } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +26,13 @@ export default function Header() {
 					className="group grid min-w-0 grid-cols-[2.25rem_1fr] items-center gap-3"
 					aria-label="Unread home"
 				>
-					<span className="flex size-9 items-center justify-center bg-[var(--header-text)] text-[var(--header-bg)] transition-colors group-hover:bg-[var(--unread-gold)]">
-						<BookOpenText className="size-5" />
+					<span className="flex size-9 items-center justify-center overflow-hidden bg-[var(--header-text)] transition-colors group-hover:bg-[var(--unread-gold)]">
+						<img
+							src="/favicon-32x32.png"
+							alt=""
+							className="size-7"
+							loading="eager"
+						/>
 					</span>
 					<span className="min-w-0">
 						<span className="block text-lg font-black leading-none">

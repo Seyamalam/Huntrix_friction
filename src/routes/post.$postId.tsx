@@ -210,7 +210,7 @@ function PublicPostReader({
 								{chunks[0].mainClaim ?? "Opening section"}
 							</h2>
 							<p className="mt-5 max-w-3xl text-sm leading-7 text-[var(--unread-ink-soft)]">
-								{chunks[0].text}
+								{chunks[0].markdown ?? chunks[0].text}
 							</p>
 							<div className="mt-6 border border-[var(--unread-ink)]/12 bg-[var(--unread-paper-2)] p-4">
 								<p className="font-semibold">{chunks[0].prompt}</p>
@@ -377,6 +377,7 @@ type PublicPost = {
 		id: string;
 		index?: number;
 		mainClaim?: string;
+		markdown?: string;
 		prompt: string;
 		responses?: Array<{ grade: string }>;
 		text: string;

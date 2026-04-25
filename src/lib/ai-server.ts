@@ -91,12 +91,13 @@ function buildPrompt(payload: AiJobPayload) {
 Rules:
 - Split into 5 to 8 meaningful sections.
 - Preserve the author's wording inside each section text.
+- If the source contains markdown structure, include matching markdown for each section when possible.
 - Each section needs a mainClaim and a reflection prompt.
 - Prompts should create cognitive friction, not summarize for the reader.
 - Mode is ${payload.mode}; stricter modes should ask more exact questions.
 
 Return JSON:
-{"chunks":[{"index":0,"text":"...","mainClaim":"...","prompt":"..."}]}
+{"chunks":[{"index":0,"text":"...","markdown":"...","mainClaim":"...","prompt":"..."}]}
 
 Title: ${payload.title}
 

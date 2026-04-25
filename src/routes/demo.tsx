@@ -1,7 +1,10 @@
 import {
 	ArrowRight,
 	ChartBar,
+	CheckCircle,
 	Compass,
+	Database,
+	FileText,
 	Fingerprint,
 	Lightning,
 	Scales,
@@ -58,6 +61,27 @@ const demoRun = [
 	"Open the dashboard analytics to show the weak checkpoint.",
 ];
 
+const demoChecklist = [
+	{
+		body: "Creates the polished public post used in the live walkthrough.",
+		icon: Database,
+		label: "Seed demo",
+		to: "/app",
+	},
+	{
+		body: "Open the saved public room and choose the [DEMO] post.",
+		icon: FileText,
+		label: "Public post",
+		to: "/blogs",
+	},
+	{
+		body: "Show author analytics, weak spots, reports, and saved sessions.",
+		icon: ChartBar,
+		label: "Dashboard analytics",
+		to: "/app",
+	},
+];
+
 function DemoPage() {
 	return (
 		<main className="min-h-dvh bg-[var(--unread-paper)] pt-28 text-[var(--unread-ink)]">
@@ -104,6 +128,43 @@ function DemoPage() {
 						actually said.
 					</p>
 				</aside>
+			</section>
+
+			<section className="unread-shell pb-12">
+				<div className="border border-[var(--unread-ink)]/10 bg-[var(--unread-ink)]/[0.045] p-4 sm:p-5">
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<div>
+							<Badge className="unread-badge">Demo checklist</Badge>
+							<h2 className="mt-4 text-4xl font-black leading-none">
+								Judge path in three clicks.
+							</h2>
+						</div>
+						<CheckCircle className="size-9 text-[var(--unread-green)]" />
+					</div>
+					<div className="mt-5 grid gap-3 lg:grid-cols-3">
+						{demoChecklist.map((item) => {
+							const Icon = item.icon;
+							return (
+								<Link
+									key={item.label}
+									to={item.to}
+									className="group border border-[var(--unread-ink)]/10 bg-[var(--unread-paper)] p-4 transition hover:-translate-y-1 hover:border-[var(--unread-green)]/40 hover:bg-[var(--unread-paper-2)]"
+								>
+									<div className="flex items-center justify-between gap-3">
+										<Icon className="size-6 text-[var(--unread-green)]" />
+										<ArrowRight className="size-4 text-[var(--unread-muted)] transition group-hover:translate-x-1 group-hover:text-[var(--unread-green)]" />
+									</div>
+									<p className="mt-7 text-2xl font-black leading-none">
+										{item.label}
+									</p>
+									<p className="mt-3 text-sm leading-6 text-[var(--unread-muted)]">
+										{item.body}
+									</p>
+								</Link>
+							);
+						})}
+					</div>
+				</div>
 			</section>
 
 			<section className="unread-shell grid gap-4 pb-12 lg:grid-cols-5">

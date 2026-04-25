@@ -22,7 +22,7 @@ import {
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -90,6 +90,7 @@ function ReadingSessionPage() {
 	const [isZenMode, setIsZenMode] = useState(false);
 	const [fontScale, setFontScale] = useState(1);
 	const [redFocusMode, setRedFocusMode] = useState(false);
+	const submitReflectionRef = useRef<() => Promise<void>>(async () => {});
 	const cursorColor = useRef(
 		colorFromString(auth.user?.id ?? sessionId),
 	).current;
@@ -538,6 +539,78 @@ function ReadingSessionPage() {
 		}
 	}
 
+	submitReflectionRef.current = submitReflection;
+
+	useEffect(() => {
+		function onKeyDown(event: KeyboardEvent) {
+			const target = event.target as HTMLElement | null;
+			const tagName = target?.tagName.toLowerCase();
+			const isEditable =
+				target?.isContentEditable ||
+				tagName === "input" ||
+				tagName === "textarea" ||
+				tagName === "select";
+			const key = event.key.toLowerCase();
+
+			if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+				event.preventDefault();
+				if (
+					auth.user &&
+					session &&
+					currentChunk &&
+					!isSaving &&
+					!isComplete &&
+					answer.trim().length >= 6
+				) {
+					void submitReflectionRef.current();
+				}
+				return;
+			}
+
+			if (isEditable || event.metaKey || event.ctrlKey || event.altKey) return;
+
+			if (key === "z") {
+				event.preventDefault();
+				setIsZenMode((current) => !current);
+				return;
+			}
+
+			if (key === "r") {
+				event.preventDefault();
+				setRedFocusMode((current) => !current);
+				return;
+			}
+
+			if (event.key === "+" || event.key === "=") {
+				event.preventDefault();
+				setFontScale((current) => Math.min(1.45, roundFont(current + 0.1)));
+				return;
+			}
+
+			if (event.key === "-" || event.key === "_") {
+				event.preventDefault();
+				setFontScale((current) => Math.max(0.85, roundFont(current - 0.1)));
+				return;
+			}
+
+			if (event.key === "Escape" && isZenMode) {
+				event.preventDefault();
+				setIsZenMode(false);
+			}
+		}
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [
+		answer,
+		auth.user,
+		currentChunk,
+		isComplete,
+		isSaving,
+		isZenMode,
+		session,
+	]);
+
 	if (!isInstantConfigured || (!auth.isLoading && !auth.user)) {
 		return <AuthRequired />;
 	}
@@ -610,10 +683,14 @@ function ReadingSessionPage() {
 								isZenMode={isZenMode}
 								redFocusMode={redFocusMode}
 								onDecreaseFont={() =>
-									setFontScale((current) => Math.max(0.85, current - 0.1))
+									setFontScale((current) =>
+										Math.max(0.85, roundFont(current - 0.1)),
+									)
 								}
 								onIncreaseFont={() =>
-									setFontScale((current) => Math.min(1.45, current + 0.1))
+									setFontScale((current) =>
+										Math.min(1.45, roundFont(current + 0.1)),
+									)
 								}
 								onResetFont={() => setFontScale(1)}
 								onToggleRedFocus={() => setRedFocusMode((current) => !current)}
@@ -679,7 +756,7 @@ function ReadingSessionPage() {
 									<FormattedReadingText
 										fontScale={fontScale}
 										redFocusMode={redFocusMode}
-										text={currentChunk.text}
+										text={currentChunk.markdown ?? currentChunk.text}
 									/>
 								</div>
 							</article>
@@ -894,6 +971,7 @@ function ReaderControls({
 					onClick={onDecreaseFont}
 					className="h-9 w-9 rounded-none text-[#17140f] hover:bg-[#17140f]/10"
 					aria-label="Decrease font size"
+					title="-"
 				>
 					<Minus className="size-4" />
 				</Button>
@@ -902,6 +980,7 @@ function ReaderControls({
 					variant="ghost"
 					onClick={onResetFont}
 					className="h-9 rounded-none px-3 font-mono text-xs text-[#5d574a] hover:bg-[#17140f]/10 hover:text-[#17140f]"
+					title="Reset font size"
 				>
 					<TextAa className="size-4" />
 					{Math.round(fontScale * 100)}%
@@ -912,6 +991,7 @@ function ReaderControls({
 					onClick={onIncreaseFont}
 					className="h-9 w-9 rounded-none text-[#17140f] hover:bg-[#17140f]/10"
 					aria-label="Increase font size"
+					title="+"
 				>
 					<Plus className="size-4" />
 				</Button>
@@ -925,6 +1005,7 @@ function ReaderControls({
 						? "border-[#a75d3f] bg-[#a75d3f] text-white hover:bg-[#8d4f35]"
 						: "border-[#17140f]/10 bg-white text-[#5d574a] hover:bg-[#f9f6ef]",
 				)}
+				title="R"
 			>
 				Red focus
 			</Button>
@@ -932,6 +1013,7 @@ function ReaderControls({
 				type="button"
 				onClick={onToggleZen}
 				className="h-9 rounded-none bg-[#11110d] px-3 text-white hover:bg-[#14876d]"
+				title="Z"
 			>
 				{isZenMode ? (
 					<ArrowsInSimple className="size-4" />
@@ -953,12 +1035,7 @@ function FormattedReadingText({
 	redFocusMode: boolean;
 	text: string;
 }) {
-	const blocks = stableTextParts(
-		text
-			.split(/\n{2,}/)
-			.map((block) => block.trim())
-			.filter(Boolean),
-	);
+	const blocks = stableTextParts(expandReadingBlocks(text));
 
 	return (
 		<div
@@ -992,6 +1069,7 @@ function ReadingBlock({
 }) {
 	const heading = text.match(/^(#{1,3})\s+(.+)/);
 	const bullet = text.match(/^[-*]\s+(.+)/);
+	const numbered = text.match(/^\d+\.\s+(.+)/);
 
 	if (heading) {
 		return (
@@ -1007,6 +1085,19 @@ function ReadingBlock({
 				<span className="mt-3 size-1.5 bg-[#14876d]" />
 				<p>
 					<InlineReadingText redFocusMode={redFocusMode} text={bullet[1]} />
+				</p>
+			</div>
+		);
+	}
+
+	if (numbered) {
+		return (
+			<div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
+				<span className="font-mono text-sm font-black text-[#14876d]">
+					{text.match(/^\d+/)?.[0]}.
+				</span>
+				<p>
+					<InlineReadingText redFocusMode={redFocusMode} text={numbered[1]} />
 				</p>
 			</div>
 		);
@@ -1104,6 +1195,22 @@ function InlineReadingSegment({
 	return <FocusedText redFocusMode={redFocusMode} text={text} />;
 }
 
+function expandReadingBlocks(text: string) {
+	return text
+		.split(/\n{2,}/)
+		.flatMap((block) => {
+			const trimmed = block.trim();
+			const lines = trimmed
+				.split(/\n/)
+				.map((line) => line.trim())
+				.filter(Boolean);
+			const isList = lines.every((line) => /^([-*]|\d+\.)\s+/.test(line));
+
+			return isList ? lines : [trimmed.replace(/\n+/g, " ")];
+		})
+		.filter(Boolean);
+}
+
 function FocusedText({
 	redFocusMode,
 	text,
@@ -1141,6 +1248,10 @@ function stableTextParts(parts: string[]) {
 			text,
 		};
 	});
+}
+
+function roundFont(value: number) {
+	return Number(value.toFixed(2));
 }
 
 function ReadingWord({

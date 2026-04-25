@@ -11,6 +11,7 @@ export const aiChunkSchema = z.object({
 			z.object({
 				index: z.number().int().min(0),
 				mainClaim: z.string().min(8),
+				markdown: z.string().min(40).optional(),
 				prompt: z.string().min(8),
 				text: z.string().min(40),
 			}),
@@ -205,6 +206,9 @@ export function normalizeAiChunks(input: unknown): AiChunks {
 			prompt: cleanString(
 				chunkRecord.prompt ?? chunkRecord.question,
 				"What is the author actually claiming here?",
+			),
+			markdown: cleanOptionalString(
+				chunkRecord.markdown ?? chunkRecord.markdownText,
 			),
 			text: cleanString(chunkRecord.text ?? chunkRecord.content, ""),
 		};

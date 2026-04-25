@@ -27,6 +27,7 @@ const schema = i.schema({
 		}),
 		chunks: i.entity({
 			index: i.number().indexed(),
+			markdown: i.string().optional(),
 			text: i.string(),
 			mainClaim: i.string().optional(),
 			prompt: i.string(),

@@ -5,6 +5,7 @@ export type ReadingChunk = {
 	id: string;
 	index: number;
 	mainClaim: string;
+	markdown?: string;
 	prompt: string;
 	text: string;
 };
@@ -78,6 +79,7 @@ export function createChunks(input: string): ReadingChunk[] {
 				id: `chunk-${index}`,
 				index,
 				mainClaim: createMainClaim(text, keywords),
+				markdown: text,
 				prompt: createPrompt(index),
 				text,
 			};

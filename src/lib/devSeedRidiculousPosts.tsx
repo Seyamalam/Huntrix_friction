@@ -190,6 +190,7 @@ async function createDemoPost(userId: string) {
 				.update({
 					index: chunk.index,
 					mainClaim: chunk.mainClaim,
+					markdown: chunk.markdown,
 					prompt: chunk.prompt,
 					text: chunk.text,
 				})

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const AI_PRIMARY_MODEL = "liquid/lfm-2.5-1.2b-thinking:free";
-export const AI_FALLBACK_MODELS = ["liquid/lfm-2.5-1.2b-instruct:free"];
+export const AI_PRIMARY_MODEL = "minimax/minimax-m2.5:free";
+export const AI_FALLBACK_MODELS = ["openai/gpt-oss-120b:free"];
 
 export const aiModels = [AI_PRIMARY_MODEL, ...AI_FALLBACK_MODELS] as const;
 

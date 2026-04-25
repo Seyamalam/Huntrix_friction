@@ -2,7 +2,12 @@ import { AutoFocusExtension, ClearEditorExtension, DecoratorTextExtension, Horiz
 import { HistoryExtension } from "@lexical/history";
 import { AutoLinkExtension, ClickableLinkExtension, LinkExtension } from "@lexical/link";
 import { CheckListExtension, ListExtension } from "@lexical/list";
-import { CHECK_LIST, ELEMENT_TRANSFORMERS, MULTILINE_ELEMENT_TRANSFORMERS, TEXT_FORMAT_TRANSFORMERS, TEXT_MATCH_TRANSFORMERS } from "@lexical/markdown";
+import {
+	CHECK_LIST,
+	ELEMENT_TRANSFORMERS,
+	TEXT_FORMAT_TRANSFORMERS,
+	TEXT_MATCH_TRANSFORMERS,
+} from "@lexical/markdown";
 import { OverflowNode } from "@lexical/overflow";
 import { CharacterLimitPlugin } from "@lexical/react/LexicalCharacterLimitPlugin";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
@@ -120,9 +125,11 @@ export function RichEditor({
           configExtension(MaxLengthExtension, { disabled: false, maxLength }),
           configExtension(MarkdownShortcutsExtension, {
             transformers: [
-              TABLE, HR, EMOJI, CHECK_LIST,
+              TABLE,
+              HR,
+              EMOJI,
+              CHECK_LIST,
               ...ELEMENT_TRANSFORMERS,
-              ...MULTILINE_ELEMENT_TRANSFORMERS,
               ...TEXT_FORMAT_TRANSFORMERS,
               ...TEXT_MATCH_TRANSFORMERS,
             ],

@@ -3,9 +3,12 @@ import {
 	Brain,
 	CheckCircle,
 	ClockCounterClockwise,
+	Compass,
 	FileText,
+	Fingerprint,
 	LockKey,
 	NotePencil,
+	Scales,
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -89,6 +92,34 @@ const workflow = [
 	},
 ];
 
+const judgingArc = [
+	{
+		icon: Scales,
+		label: "Interpretation",
+		score: "30%",
+		text: "We take friction literally: the app blocks progress until the reader can name the claim.",
+	},
+	{
+		icon: Compass,
+		label: "Creative leap",
+		score: "25%",
+		text: "Unread is not a faster summarizer. It is a tool that makes knowledge harder to fake.",
+	},
+	{
+		icon: Fingerprint,
+		label: "Conviction",
+		score: "10%",
+		text: "The product is willing to frustrate you on purpose. That is the point.",
+	},
+];
+
+const proofPoints = [
+	"Next section hidden until the current claim is answered",
+	"AI pushes back on vague summaries instead of revealing the answer",
+	"Completion report is based on what the reader proved, not what the article said",
+	"Shared rooms turn reading into evidence for teams, classes, and groups",
+];
+
 function HomePage() {
 	const [sourceText, setSourceText] = useState(sampleText);
 	const [mode, setMode] = useState<FrictionMode>("serious");
@@ -161,15 +192,20 @@ function HomePage() {
 		<main className="min-h-dvh overflow-x-hidden bg-[var(--unread-paper)] text-[var(--unread-ink)]">
 			<div className="unread-texture fixed inset-0 z-0 opacity-100" />
 
-			<section className="unread-shell relative z-10 grid gap-10 pb-14 pt-32 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-end lg:pt-40">
+			<section className="unread-shell relative z-10 grid gap-10 pb-14 pt-28 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end lg:pt-36">
 				<div>
-					<Badge className="unread-badge">Anti-summary app</Badge>
-					<h1 className="mt-7 max-w-6xl text-[clamp(3.4rem,9vw,8.6rem)] font-black leading-[0.78] text-balance">
-						Read slower. Ship understanding faster.
+					<Badge className="unread-badge">Hackathon stance</Badge>
+					<p className="mt-7 max-w-3xl font-mono text-sm font-semibold uppercase tracking-[0.18em] text-[var(--unread-clay)]">
+						We built Unread to study productive friction because fake
+						understanding is easier than reading.
+					</p>
+					<h1 className="mt-5 max-w-6xl text-[clamp(3.6rem,10vw,9.6rem)] font-black leading-[0.76] text-balance">
+						AI should stop you from pretending you read.
 					</h1>
 					<p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--unread-ink-soft)]">
-						Unread turns hard text into a locked reading room: one section, one
-						checkpoint, one proof of comprehension at a time.
+						Unread is an anti-summary app. It turns articles, memos, and essays
+						into locked reading rooms where progress requires evidence: one
+						section, one checkpoint, one claim in your own words.
 					</p>
 					<div className="mt-9 flex flex-wrap items-center gap-3">
 						<a
@@ -179,32 +215,48 @@ function HomePage() {
 								"h-12 bg-[var(--unread-ink)] px-5 text-[var(--unread-paper)] hover:bg-[var(--unread-gold)]",
 							)}
 						>
-							Start a room
+							Try the friction
 							<ArrowRight className="size-4" />
 						</a>
 						<Link
-							to="/blogs"
+							to="/login"
 							className={cn(
 								buttonVariants({ variant: "outline", size: "lg" }),
 								"h-12 border-[var(--unread-ink)]/30 bg-[var(--unread-ink)]/[0.045] px-5 text-[var(--unread-ink)] hover:bg-[var(--unread-ink)]/12 hover:text-[var(--unread-ink)]",
 							)}
 						>
-							Browse posts
+							Open workspace
 						</Link>
 					</div>
 				</div>
 
-				<aside className="unread-panel bg-[var(--unread-ink)] p-5 text-[var(--unread-paper)]">
-					<div className="unread-inset-grid border border-[var(--unread-paper)]/10 p-4">
+				<aside className="unread-panel overflow-hidden bg-[var(--unread-ink)] p-5 text-[var(--unread-paper)]">
+					<div className="unread-inset-grid relative border border-[var(--unread-paper)]/10 p-4">
+						<div className="-right-12 -top-12 absolute size-40 border border-[var(--unread-gold)]/35 bg-[var(--unread-gold)]/12" />
 						<div className="flex items-center justify-between">
 							<span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--unread-muted)]">
-								live room
+								judge this in 60 sec
 							</span>
 							<span className="h-2 w-16 bg-[var(--unread-green)]" />
 						</div>
 						<p className="mt-10 max-w-xs text-4xl font-black leading-none">
-							Next section remains hidden.
+							The interface withholds the shortcut.
 						</p>
+						<div className="mt-8 grid gap-2">
+							{proofPoints.slice(0, 3).map((point, index) => (
+								<div
+									key={point}
+									className="grid grid-cols-[2.5rem_minmax(0,1fr)] border border-[var(--unread-paper)]/12 bg-[var(--unread-paper)]/7"
+								>
+									<span className="grid place-items-center border-[var(--unread-paper)]/12 border-r font-mono text-sm text-[var(--unread-gold)]">
+										{index + 1}
+									</span>
+									<span className="p-3 text-sm leading-5 text-[var(--unread-paper)]/88">
+										{point}
+									</span>
+								</div>
+							))}
+						</div>
 						<div className="mt-8 grid grid-cols-3 gap-2">
 							<HeroMetric label="sections" value={chunks.length || 5} />
 							<HeroMetric label="clear" value={report.clearAnswers} />
@@ -212,6 +264,33 @@ function HomePage() {
 						</div>
 					</div>
 				</aside>
+			</section>
+
+			<section className="unread-shell relative z-10 py-10">
+				<div className="grid gap-3 lg:grid-cols-3">
+					{judgingArc.map((item) => {
+						const Icon = item.icon;
+						return (
+							<article
+								key={item.label}
+								className="group min-h-64 border border-[var(--unread-ink)]/12 bg-[var(--unread-paper)] p-5 transition duration-300 hover:-translate-y-1 hover:bg-[var(--unread-ink)] hover:text-[var(--unread-paper)]"
+							>
+								<div className="flex items-start justify-between gap-4">
+									<Icon className="size-8 text-[var(--unread-green)] transition group-hover:text-[var(--unread-gold)]" />
+									<span className="font-mono text-5xl font-black leading-none text-[var(--unread-clay)] tabular-nums">
+										{item.score}
+									</span>
+								</div>
+								<p className="mt-14 text-3xl font-black leading-none">
+									{item.label}
+								</p>
+								<p className="mt-4 max-w-sm text-sm leading-6 text-[var(--unread-ink-soft)] transition group-hover:text-[var(--unread-paper)]/78">
+									{item.text}
+								</p>
+							</article>
+						);
+					})}
+				</div>
 			</section>
 
 			<section className="unread-shell relative z-10 grid gap-3 py-10 md:grid-cols-4">
@@ -241,13 +320,21 @@ function HomePage() {
 				<div className="lg:sticky lg:top-28 lg:self-start">
 					<Badge className="unread-badge">Working demo</Badge>
 					<h2 className="mt-6 max-w-2xl text-[clamp(2.7rem,6vw,6.2rem)] font-black leading-[0.84] text-balance">
-						The loop is the product.
+						The discomfort is the demo.
 					</h2>
 					<p className="mt-6 max-w-xl text-base leading-8 text-[var(--unread-muted)]">
-						This local room already splits text, gates progression, grades
-						reflections, and builds a report. Backend persistence can land on
-						top without changing the user flow.
+						A stranger should understand the thesis without a pitch: the app
+						refuses to summarize first. It asks you to make a claim, checks it,
+						and only then lets the next section appear.
 					</p>
+					<div className="mt-6 border border-[var(--unread-ink)]/12 bg-[var(--unread-ink)]/[0.055] p-4">
+						<p className="font-mono text-xs uppercase tracking-[0.16em] text-[var(--unread-clay)]">
+							Our bet
+						</p>
+						<p className="mt-3 text-2xl font-black leading-tight">
+							The best use of AI in reading is not speed. It is resistance.
+						</p>
+					</div>
 				</div>
 
 				<div className="grid gap-4">
@@ -263,8 +350,8 @@ function HomePage() {
 										placeholder="Paste an essay, memo, article, paper excerpt, or draft..."
 									/>
 									<FieldDescription className="text-[var(--unread-ink-soft)]">
-										Local demo requires 240+ characters. URL extraction and AI
-										chunking come next.
+										Local demo requires 240+ characters. The signed-in workspace
+										saves rooms and streams AI checkpoints from OpenRouter.
 									</FieldDescription>
 								</Field>
 								{setupError ? (

@@ -1,4 +1,18 @@
-Welcome to your new TanStack Start app! 
+# Unread
+
+Unread is an anti-summary reading app for the hackathon theme "friction." The stance is direct: AI should not always make reading faster. Here, AI creates productive resistance by locking progress until a reader can prove they understood the current section.
+
+## Judge Demo
+
+Use `/demo` for the rubric map and 60-second pitch. Use the workspace seed tool to create `[DEMO] The meeting after nobody read`, then open `/blogs` and start the public room.
+
+Rubric fit:
+
+- Interpretation & Stance: productive friction is the core mechanic, not decoration.
+- Creative Leap: the AI is a gatekeeper against fake understanding instead of a summarizer.
+- Craft & Execution: saved rooms, streaming AI feedback, locked checkpoints, public posts, reports, and author analytics all serve the same idea.
+- Communication: a judge can understand the loop in one minute: read one section, answer, get blocked or unlock.
+- Conviction: the app is willing to frustrate the reader on purpose.
 
 # Getting Started
 

@@ -6,61 +6,22 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { createChunks } from "@/lib/reading";
 
-const POST_COUNT = 100;
-const MIN_WORDS = 500;
-const MAX_WORDS = 50_000;
+const DEMO_TITLE = "[DEMO] The meeting after nobody read";
+const DEMO_BODY = `The meeting started with a sentence everyone had learned to say: "I read the memo." Nobody asked what the memo argued. Nobody asked which assumption was carrying the proposal. The team moved straight into opinions, because opinions are easier to offer than evidence.
 
-const titleParts = [
-	"False fluency",
-	"The argument nobody checked",
-	"Notes against skimming",
-	"A memo on slow agreement",
-	"How certainty gets manufactured",
-	"The reader who nodded too early",
-	"Evidence before endorsement",
-	"Against passive comprehension",
-	"Working notes on attention",
-	"The meeting after nobody read",
-];
+By slide three, the room had already agreed to a plan that the memo itself warned against. The warning was not hidden. It sat in the second paragraph: the proposed launch would only work if support volume stayed flat, but the last two experiments had doubled support tickets. The sentence was visible. It simply had not become anyone's responsibility.
 
-const vocabulary = [
-	"attention",
-	"claim",
-	"evidence",
-	"revision",
-	"memory",
-	"argument",
-	"checkpoint",
-	"reader",
-	"friction",
-	"understanding",
-	"context",
-	"assumption",
-	"counterpoint",
-	"signal",
-	"interpretation",
-	"summary",
-	"confusion",
-	"decision",
-	"meeting",
-	"margin",
-	"pressure",
-	"source",
-	"paragraph",
-	"proof",
-	"recall",
-	"thesis",
-	"response",
-	"section",
-	"question",
-	"review",
-];
+This is the strange social power of fake understanding. A reader can nod, quote a phrase, and keep the meeting moving while missing the claim that matters. Speed feels cooperative in the moment. Later, when the decision breaks, the cost appears as rework, blame, and another meeting.
+
+The productive kind of friction interrupts that performance. It does not punish people for being confused. It asks them to locate the claim before they inherit the confidence of the room. A small pause at the point of reading can prevent a much larger pause at the point of repair.
+
+Unread exists for that pause. It treats comprehension as something a reader demonstrates, not something a tool assumes. If you cannot say the section back in your own words, the next section should wait.`;
 
 type SeedStatus =
 	| { kind: "idle" }
-	| { created: number; kind: "running"; total: number }
-	| { created: number; kind: "done"; total: number }
-	| { created: number; kind: "error"; message: string; total: number };
+	| { kind: "running" }
+	| { kind: "done"; title: string }
+	| { kind: "error"; message: string };
 
 export function DevSeedRidiculousPostsButton({ userId }: { userId?: string }) {
 	const [status, setStatus] = useState<SeedStatus>({ kind: "idle" });
@@ -82,35 +43,23 @@ export function DevSeedRidiculousPostsButton({ userId }: { userId?: string }) {
 	const ownedPosts = (
 		(postsQuery.data as DevPostsData | undefined)?.posts ?? []
 	).filter((post) => post.author?.id === userId);
+	const demoPost = ownedPosts.find((post) => post.title === DEMO_TITLE);
 
-	async function seedPosts() {
+	async function seedDemoPost() {
 		if (!userId || status.kind === "running") return;
 
-		const confirmed = window.confirm(
-			`Create ${POST_COUNT} public posts with bodies from ${MIN_WORDS.toLocaleString()} to ${MAX_WORDS.toLocaleString()} words? This is intentionally excessive dev data.`,
-		);
+		setStatus({ kind: "running" });
 
-		if (!confirmed) return;
-
-		setStatus({ created: 0, kind: "running", total: POST_COUNT });
-
-		for (let index = 0; index < POST_COUNT; index += 1) {
-			try {
-				await createPublishedPost(index, userId);
-				setStatus({
-					created: index + 1,
-					kind: index + 1 === POST_COUNT ? "done" : "running",
-					total: POST_COUNT,
-				});
-			} catch (error) {
-				setStatus({
-					created: index,
-					kind: "error",
-					message: getErrorMessage(error),
-					total: POST_COUNT,
-				});
+		try {
+			if (demoPost) {
+				setStatus({ kind: "done", title: demoPost.title });
 				return;
 			}
+
+			await createDemoPost(userId);
+			setStatus({ kind: "done", title: DEMO_TITLE });
+		} catch (error) {
+			setStatus({ kind: "error", message: getErrorMessage(error) });
 		}
 	}
 
@@ -171,24 +120,26 @@ export function DevSeedRidiculousPostsButton({ userId }: { userId?: string }) {
 			<div className="flex items-start gap-2">
 				<WarningCircle className="mt-0.5 size-4 text-amber-200" />
 				<div>
-					<p className="text-xs font-semibold text-amber-100">Dev seed tool</p>
+					<p className="text-xs font-semibold text-amber-100">
+						Judge demo seed
+					</p>
 					<p className="mt-1 text-xs leading-5 text-[#d6cbbb]">
-						Generates 100 public lorem posts. Remove
-						<code className="mx-1 text-amber-100">
-							src/lib/devSeedRidiculousPosts.tsx
-						</code>
-						later.
+						Creates one polished public post for the live rubric walkthrough.
 					</p>
 				</div>
 			</div>
 			<Button
 				type="button"
 				disabled={!userId || running}
-				onClick={seedPosts}
+				onClick={seedDemoPost}
 				className="mt-3 h-10 w-full justify-start bg-amber-200 text-[#11110d] hover:bg-amber-300"
 			>
 				<Database className="size-4" />
-				{running ? "Generating posts" : "Seed 100 huge posts"}
+				{running
+					? "Seeding demo"
+					: demoPost
+						? "Demo post ready"
+						: "Seed judge demo post"}
 			</Button>
 			<Button
 				type="button"
@@ -200,11 +151,14 @@ export function DevSeedRidiculousPostsButton({ userId }: { userId?: string }) {
 				<Trash className="size-4" />
 				Delete all my posts
 			</Button>
-			{status.kind !== "idle" ? (
+			{status.kind === "done" ? (
 				<p className="mt-2 text-xs leading-5 text-[#d6cbbb]">
-					{status.created}/{status.total} created
-					{status.kind === "error" ? ` - ${status.message}` : ""}
-					{status.kind === "done" ? " - done" : ""}
+					Seeded: {status.title}
+				</p>
+			) : null}
+			{status.kind === "error" ? (
+				<p className="mt-2 text-xs leading-5 text-[#f0b999]">
+					{status.message}
 				</p>
 			) : null}
 			{deleteStatus ? (
@@ -214,22 +168,20 @@ export function DevSeedRidiculousPostsButton({ userId }: { userId?: string }) {
 	);
 }
 
-async function createPublishedPost(index: number, userId: string) {
+async function createDemoPost(userId: string) {
 	const now = Date.now();
 	const postId = id();
-	const wordCount = wordCountForIndex(index);
-	const body = generateBody(index, wordCount);
-	const chunks = createChunks(body);
+	const chunks = createChunks(DEMO_BODY);
 	const chunkIds = chunks.map(() => id());
 
 	await db.transact([
 		db.tx.posts[postId]
 			.update({
-				body,
-				createdAt: now + index,
+				body: DEMO_BODY,
+				createdAt: now,
 				sourceType: "original",
-				title: `[DEV SEED ${String(index + 1).padStart(3, "0")}] ${titleParts[index % titleParts.length]} (${wordCount.toLocaleString()} words)`,
-				updatedAt: now + index,
+				title: DEMO_TITLE,
+				updatedAt: now,
 				visibility: "public",
 			})
 			.link({ author: userId }),
@@ -244,61 +196,6 @@ async function createPublishedPost(index: number, userId: string) {
 				.link({ post: postId }),
 		),
 	]);
-}
-
-function wordCountForIndex(index: number) {
-	if (index === 0) return MIN_WORDS;
-	if (index === POST_COUNT - 1) return MAX_WORDS;
-
-	const ratio = index / (POST_COUNT - 1);
-	const curved = ratio ** 1.6;
-	return Math.round(MIN_WORDS + (MAX_WORDS - MIN_WORDS) * curved);
-}
-
-function generateBody(seed: number, targetWords: number) {
-	const paragraphs: string[] = [];
-	let remaining = targetWords;
-	let paragraphIndex = 0;
-
-	while (remaining > 0) {
-		const paragraphWords = Math.min(
-			remaining,
-			90 + ((seed * 17 + paragraphIndex * 23) % 150),
-		);
-		paragraphs.push(generateParagraph(seed, paragraphIndex, paragraphWords));
-		remaining -= paragraphWords;
-		paragraphIndex += 1;
-	}
-
-	return paragraphs.join("\n\n");
-}
-
-function generateParagraph(
-	seed: number,
-	paragraphIndex: number,
-	targetWords: number,
-) {
-	const words: string[] = [];
-
-	for (let index = 0; index < targetWords; index += 1) {
-		const vocabIndex =
-			(seed * 31 + paragraphIndex * 13 + index * 7) % vocabulary.length;
-		words.push(vocabulary[vocabIndex]);
-	}
-
-	const sentences: string[] = [];
-	for (let index = 0; index < words.length; index += 18) {
-		const sentenceWords = words.slice(index, index + 18);
-		if (sentenceWords.length === 0) continue;
-		sentenceWords[0] = capitalize(sentenceWords[0]);
-		sentences.push(`${sentenceWords.join(" ")}.`);
-	}
-
-	return sentences.join(" ");
-}
-
-function capitalize(value: string) {
-	return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
 function getErrorMessage(error: unknown) {
@@ -338,4 +235,5 @@ type DevPost = {
 			id: string;
 		};
 	}>;
+	title: string;
 };

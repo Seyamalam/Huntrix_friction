@@ -6,6 +6,7 @@ import {
 	ClockCounterClockwise,
 	FileText,
 	Plus,
+	Target,
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -29,7 +30,9 @@ function AppDashboard() {
 						author: {},
 						chunks: {},
 						readingSessions: {
-							responses: {},
+							responses: {
+								chunk: {},
+							},
 							understandingReport: {},
 						},
 					},
@@ -69,6 +72,7 @@ function AppDashboard() {
 	const completionRate = sessions.length
 		? Math.round((completedSessions.length / sessions.length) * 100)
 		: 0;
+	const authorAnalytics = buildAuthorAnalytics(posts);
 
 	return (
 		<main className="min-h-dvh px-4 py-5 sm:px-6 lg:px-8">
@@ -103,6 +107,8 @@ function AppDashboard() {
 				<Metric label="clear answers" value={clearResponses.length} />
 				<Metric label="completion" suffix="%" value={completionRate} />
 			</section>
+
+			<AuthorAnalyticsPanel analytics={authorAnalytics} />
 
 			<section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.8fr)]">
 				<div className="grid gap-5">
@@ -166,6 +172,79 @@ function AppDashboard() {
 				</Panel>
 			</section>
 		</main>
+	);
+}
+
+function AuthorAnalyticsPanel({
+	analytics,
+}: {
+	analytics: ReturnType<typeof buildAuthorAnalytics>;
+}) {
+	return (
+		<section className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.42fr)]">
+			<div className="border border-[#17140f]/10 bg-[#11110d] p-5 text-[#f4efe4]">
+				<div className="flex flex-wrap items-start justify-between gap-4">
+					<div>
+						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#d0aa57]">
+							Author analytics
+						</p>
+						<h2 className="mt-2 text-3xl font-black leading-none">
+							Where readers proved understanding.
+						</h2>
+						<p className="mt-3 max-w-2xl text-sm leading-6 text-[#d6cbbb]">
+							These numbers come from saved room sessions, reader answers, and
+							the checkpoint each answer was attached to.
+						</p>
+					</div>
+					<Target className="size-8 text-[#14876d]" />
+				</div>
+				<div className="mt-5 grid gap-3 sm:grid-cols-3">
+					<DarkMetric label="readers" value={analytics.readerSessions} />
+					<DarkMetric
+						label="author clear rate"
+						suffix="%"
+						value={analytics.clearRate}
+					/>
+					<DarkMetric
+						label="completed rooms"
+						value={analytics.completedSessions}
+					/>
+				</div>
+			</div>
+			<div className="border border-[#17140f]/10 bg-white p-5">
+				<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+					Most misunderstood
+				</p>
+				<h3 className="mt-4 text-2xl font-black leading-tight text-balance">
+					{analytics.weakestSection?.claim ?? "No weak section yet"}
+				</h3>
+				<p className="mt-3 text-sm leading-6 text-[#5d574a]">
+					{analytics.weakestSection
+						? `${analytics.weakestSection.weakAnswers} vague or incorrect answers on "${analytics.weakestSection.postTitle}".`
+						: "Once readers answer checkpoints, the roughest section will appear here."}
+				</p>
+			</div>
+		</section>
+	);
+}
+
+function DarkMetric({
+	label,
+	suffix,
+	value,
+}: {
+	label: string;
+	suffix?: string;
+	value: number;
+}) {
+	return (
+		<div className="border border-white/10 bg-white/6 p-4">
+			<p className="font-mono text-3xl font-black tabular-nums">
+				{value}
+				{suffix}
+			</p>
+			<p className="mt-1 text-xs font-semibold text-[#d6cbbb]">{label}</p>
+		</div>
 	);
 }
 
@@ -281,7 +360,12 @@ function PostCard({ post, userId }: { post: PostRecord; userId: string }) {
 			await db.transact(
 				db.tx.readingSessions[sessionId]
 					.update({
-						access: post.visibility === "private" ? "private" : "invite",
+						access:
+							post.visibility === "public"
+								? "public"
+								: post.visibility === "private"
+									? "private"
+									: "invite",
 						createdAt: Date.now(),
 						currentChunkIndex: 0,
 						groupCurrentChunkIndex: 0,
@@ -447,6 +531,54 @@ function getErrorMessage(error: unknown) {
 	return "Something went wrong. Try again.";
 }
 
+function buildAuthorAnalytics(posts: PostRecord[]) {
+	const postSessions = posts.flatMap((post) =>
+		(post.readingSessions ?? []).map((session) => ({ post, session })),
+	);
+	const responses = postSessions.flatMap(({ post, session }) =>
+		(session.responses ?? []).map((response) => ({ post, response })),
+	);
+	const clearResponses = responses.filter(
+		({ response }) => response.grade === "clear",
+	);
+	const weakByChunk = new Map<
+		string,
+		{
+			claim: string;
+			postTitle: string;
+			weakAnswers: number;
+		}
+	>();
+
+	for (const { post, response } of responses) {
+		if (response.grade === "clear") continue;
+		const chunk = response.chunk;
+		const chunkKey = chunk?.id ?? `${post.id}:unknown`;
+		const current = weakByChunk.get(chunkKey) ?? {
+			claim: chunk?.mainClaim ?? "Unlinked checkpoint",
+			postTitle: post.title,
+			weakAnswers: 0,
+		};
+		current.weakAnswers += 1;
+		weakByChunk.set(chunkKey, current);
+	}
+
+	const weakestSection = [...weakByChunk.values()].sort(
+		(a, b) => b.weakAnswers - a.weakAnswers,
+	)[0];
+
+	return {
+		clearRate: responses.length
+			? Math.round((clearResponses.length / responses.length) * 100)
+			: 0,
+		completedSessions: postSessions.filter(
+			({ session }) => session.status === "completed",
+		).length,
+		readerSessions: postSessions.length,
+		weakestSection,
+	};
+}
+
 type AppData = {
 	posts?: PostRecord[];
 	readingSessions?: SessionRecord[];
@@ -473,7 +605,13 @@ type SessionRecord = {
 	post?: PostRecord & {
 		chunks?: Array<{ id: string; index: number }>;
 	};
-	responses?: Array<{ grade: string }>;
+	responses?: Array<{
+		chunk?: {
+			id: string;
+			mainClaim?: string;
+		};
+		grade: string;
+	}>;
 	status: string;
 	understandingReport?: {
 		strengths?: string[];

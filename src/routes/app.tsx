@@ -3,6 +3,7 @@ import {
 	BookOpenTextIcon,
 	FileTextIcon,
 	HouseIcon,
+	LightningIcon,
 	PlusIcon,
 	SignOutIcon,
 } from "@phosphor-icons/react";
@@ -19,6 +20,7 @@ const appNav = [
 	{ icon: HouseIcon, label: "Dashboard", to: "/app" },
 	{ icon: PlusIcon, label: "New session", to: "/app/create" },
 	{ icon: FileTextIcon, label: "Public posts", to: "/blogs" },
+	{ icon: LightningIcon, label: "Judge demo", to: "/demo" },
 ] as const;
 
 function AppLayout() {
@@ -128,7 +130,7 @@ function AppLayout() {
 						) : null}
 					</div>
 				</div>
-				<nav className="mt-3 grid grid-cols-3 gap-2">
+				<nav className="mt-3 grid grid-cols-4 gap-2">
 					{appNav.map((item) => (
 						<Link
 							key={item.label}

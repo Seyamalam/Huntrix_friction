@@ -10,16 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as BlogsRouteImport } from './routes/blogs'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as PostPostIdRouteImport } from './routes/post.$postId'
 import { Route as AppCreateRouteImport } from './routes/app.create'
 import { Route as AppSessionSessionIdRouteImport } from './routes/app.session.$sessionId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogsRoute = BlogsRouteImport.update({
@@ -42,6 +49,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const PostPostIdRoute = PostPostIdRouteImport.update({
+  id: '/post/$postId',
+  path: '/post/$postId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppCreateRoute = AppCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -57,16 +69,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/blogs': typeof BlogsRoute
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/app/create': typeof AppCreateRoute
+  '/post/$postId': typeof PostPostIdRoute
   '/app/': typeof AppIndexRoute
   '/app/session/$sessionId': typeof AppSessionSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blogs': typeof BlogsRoute
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/app/create': typeof AppCreateRoute
+  '/post/$postId': typeof PostPostIdRoute
   '/app': typeof AppIndexRoute
   '/app/session/$sessionId': typeof AppSessionSessionIdRoute
 }
@@ -75,8 +91,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/blogs': typeof BlogsRoute
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/app/create': typeof AppCreateRoute
+  '/post/$postId': typeof PostPostIdRoute
   '/app/': typeof AppIndexRoute
   '/app/session/$sessionId': typeof AppSessionSessionIdRoute
 }
@@ -86,16 +104,20 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/blogs'
+    | '/demo'
     | '/login'
     | '/app/create'
+    | '/post/$postId'
     | '/app/'
     | '/app/session/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/blogs'
+    | '/demo'
     | '/login'
     | '/app/create'
+    | '/post/$postId'
     | '/app'
     | '/app/session/$sessionId'
   id:
@@ -103,8 +125,10 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/blogs'
+    | '/demo'
     | '/login'
     | '/app/create'
+    | '/post/$postId'
     | '/app/'
     | '/app/session/$sessionId'
   fileRoutesById: FileRoutesById
@@ -113,7 +137,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   BlogsRoute: typeof BlogsRoute
+  DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
+  PostPostIdRoute: typeof PostPostIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -123,6 +149,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blogs': {
@@ -152,6 +185,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/post/$postId': {
+      id: '/post/$postId'
+      path: '/post/$postId'
+      fullPath: '/post/$postId'
+      preLoaderRoute: typeof PostPostIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/create': {
       id: '/app/create'
@@ -188,7 +228,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   BlogsRoute: BlogsRoute,
+  DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
+  PostPostIdRoute: PostPostIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

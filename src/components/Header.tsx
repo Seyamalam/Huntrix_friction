@@ -14,6 +14,7 @@ const NAV_ITEMS = [
 	{ name: "Reading room", to: "/" },
 	{ name: "Workspace", to: "/app" },
 	{ name: "Posts", to: "/blogs" },
+	{ name: "Demo", to: "/demo" },
 ] as const;
 
 export default function Header() {
@@ -98,7 +99,8 @@ export default function Header() {
 								className: "bg-[var(--header-text)] text-[var(--header-bg)]",
 							}}
 							inactiveProps={{
-								className: "bg-[var(--header-text)]/[0.06] text-[var(--header-text)]",
+								className:
+									"bg-[var(--header-text)]/[0.06] text-[var(--header-text)]",
 							}}
 							className="flex h-9 flex-1 items-center justify-center text-xs font-semibold"
 						>

@@ -7,7 +7,7 @@ import {
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -20,12 +20,10 @@ import {
 	ProgressValue,
 } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AiChunks } from "@/lib/ai-jobs";
+import { streamAiJob } from "@/lib/ai-stream";
 import { db, isInstantConfigured } from "@/lib/db";
-import {
-	createChunks,
-	type FrictionMode,
-	type ReadingChunk,
-} from "@/lib/reading";
+import type { FrictionMode, ReadingChunk } from "@/lib/reading";
 import { cn } from "@/lib/utils";
 
 import {
@@ -46,10 +44,8 @@ export function CreatePostPage() {
 	const [visibility, setVisibility] = useState<PostVisibility>("private");
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
-	const chunks = useMemo(() => {
-		if (bodyPlainText.trim().length < 240) return [] as ReadingChunk[];
-		return createChunks(bodyPlainText);
-	}, [bodyPlainText]);
+	const [chunks, setChunks] = useState<ReadingChunk[]>([]);
+	const [aiStream, setAiStream] = useState("");
 
 	async function createRoom() {
 		if (!auth.user) {
@@ -66,7 +62,7 @@ export function CreatePostPage() {
 			return;
 		}
 
-		if (cleanBodyPlainText.length < 240 || chunks.length === 0) {
+		if (cleanBodyPlainText.length < 240) {
 			setError(
 				"Paste at least a few paragraphs so Unread can make checkpoints.",
 			);
@@ -75,13 +71,27 @@ export function CreatePostPage() {
 
 		setIsSaving(true);
 		setError("");
+		setAiStream("");
+		setChunks([]);
 
 		const now = Date.now();
 		const postId = id();
 		const sessionId = id();
-		const chunkIds = chunks.map(() => id());
 
 		try {
+			const aiChunks = await streamAiJob(
+				{
+					body: cleanBodyPlainText,
+					job: "chunk",
+					mode,
+					title: cleanTitle,
+				},
+				(delta) => setAiStream((current) => `${current}${delta}`),
+			);
+			const generatedChunks = normalizeAiChunks(aiChunks);
+			const chunkIds = generatedChunks.map(() => id());
+			setChunks(generatedChunks);
+
 			await db.transact([
 				db.tx.posts[postId]
 					.update({
@@ -103,7 +113,7 @@ export function CreatePostPage() {
 						status: "active",
 					})
 					.link({ post: postId, user: auth.user.id }),
-				...chunks.map((chunk, index) =>
+				...generatedChunks.map((chunk, index) =>
 					db.tx.chunks[chunkIds[index]]
 						.update({
 							index: chunk.index,
@@ -120,7 +130,11 @@ export function CreatePostPage() {
 				params: { sessionId },
 			});
 		} catch (err) {
-			setError(getErrorMessage(err));
+			setError(
+				err instanceof Error && err.message === "AI unavailable."
+					? "AI unavailable. Check OPENROUTER_API_KEY or try again later."
+					: getErrorMessage(err),
+			);
 		} finally {
 			setIsSaving(false);
 		}
@@ -259,6 +273,11 @@ export function CreatePostPage() {
 									</p>
 								</div>
 							))}
+							{isSaving && aiStream ? (
+								<div className="max-h-40 overflow-hidden border border-white/18 bg-white/8 p-3 font-mono text-xs leading-5 text-white/75">
+									{aiStream.slice(-900)}
+								</div>
+							) : null}
 						</div>
 						{error ? (
 							<Alert className="mt-5 border-white/20 bg-[#fff4ed] text-[#17140f]">
@@ -274,7 +293,9 @@ export function CreatePostPage() {
 							onClick={createRoom}
 							className="mt-5 h-12 w-full bg-white text-[#11110d] hover:bg-[#d0aa57]"
 						>
-							{isSaving ? "Creating" : "Create session and start"}
+							{isSaving
+								? "Streaming AI checkpoints"
+								: "Create session and start"}
 							<ArrowRight className="size-4" />
 						</Button>
 					</div>
@@ -282,6 +303,18 @@ export function CreatePostPage() {
 			</section>
 		</main>
 	);
+}
+
+function normalizeAiChunks(result: AiChunks): ReadingChunk[] {
+	return result.chunks
+		.sort((a, b) => a.index - b.index)
+		.map((chunk, index) => ({
+			id: `ai-chunk-${index}`,
+			index,
+			mainClaim: chunk.mainClaim.trim(),
+			prompt: chunk.prompt.trim(),
+			text: chunk.text.trim(),
+		}));
 }
 
 function getErrorMessage(error: unknown) {

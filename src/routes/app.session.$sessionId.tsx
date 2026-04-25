@@ -30,10 +30,11 @@ import {
 } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import type { AiGrade, AiReport } from "@/lib/ai-jobs";
+import { streamAiJob } from "@/lib/ai-stream";
 import { db, isInstantConfigured } from "@/lib/db";
 import {
 	buildReport,
-	gradeAnswer,
 	type ReaderResponse,
 	type ReadingChunk,
 } from "@/lib/reading";
@@ -73,6 +74,7 @@ function ReadingSessionPage() {
 	const [status, setStatus] = useState("");
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const [aiStream, setAiStream] = useState("");
 	const [comment, setComment] = useState("");
 	const [facilitatorNote, setFacilitatorNote] = useState("");
 	const [copied, setCopied] = useState(false);
@@ -186,6 +188,9 @@ function ReadingSessionPage() {
 		() => buildGroupReport(chunks, sharedAnswers),
 		[chunks, sharedAnswers],
 	);
+	const canOverrideCurrent = Boolean(
+		currentResponse && currentResponse.grade !== "clear" && !isComplete,
+	);
 
 	async function submitReflection() {
 		if (!auth.user || !session || !currentChunk) return;
@@ -200,11 +205,32 @@ function ReadingSessionPage() {
 		setIsSaving(true);
 		setStatus("");
 		setError("");
+		setAiStream("");
 
-		const result = gradeAnswer(cleanAnswer, currentChunk, session.mode);
+		let result: AiGrade;
+		try {
+			result = await streamAiJob(
+				{
+					answer: cleanAnswer,
+					chunkText: currentChunk.text,
+					job: "grade",
+					mode: session.mode,
+					prompt: currentChunk.prompt,
+				},
+				(delta) => setAiStream((current) => `${current}${delta}`),
+			);
+		} catch {
+			setError("AI unavailable. Check OPENROUTER_API_KEY or try again later.");
+			setIsSaving(false);
+			return;
+		}
+
 		const nextResponse: ReaderResponse = {
 			answer: cleanAnswer,
-			feedback: result.feedback,
+			feedback:
+				result.grade === "clear" || !result.followUp
+					? result.feedback
+					: `${result.feedback} ${result.followUp}`,
 			grade: result.grade,
 			revisionCount: result.grade === "clear" ? 0 : 1,
 		};
@@ -220,10 +246,25 @@ function ReadingSessionPage() {
 		const completesSession =
 			result.grade === "clear" && nextCompletedCount >= chunks.length;
 		const now = Date.now();
-		const reportForSave = buildReport(chunks, nextResponseMap);
+		let aiReport: AiReport | undefined;
+
+		if (isOwner && completesSession) {
+			try {
+				aiReport = await streamAiJob(
+					buildReportPayload(chunks, nextResponseMap),
+					(delta) => setAiStream((current) => `${current}${delta}`),
+				);
+			} catch {
+				setError(
+					"AI unavailable. The answer was checked, but the report was not generated.",
+				);
+				setIsSaving(false);
+				return;
+			}
+		}
 
 		try {
-			const tx = [
+			const tx: unknown[] = [
 				db.tx.responses[responseId]
 					.update({
 						answer: cleanAnswer,
@@ -260,25 +301,95 @@ function ReadingSessionPage() {
 					db.tx.understandingReports[reportId]
 						.update({
 							createdAt: now,
-							keyClaims: reportForSave.keyClaims,
-							recommendedReview: reportForSave.recommendedReview,
-							strengths: reportForSave.strengths,
-							weakSpots: reportForSave.weakSections.map(
-								(section) => `Section ${section}`,
-							),
+							keyClaims: aiReport?.keyClaims ?? [],
+							recommendedReview: aiReport?.recommendedReview ?? [],
+							strengths: aiReport?.strengths ?? [],
+							weakSpots: aiReport?.weakSpots ?? [],
 						})
 						.link({ session: session.id }),
 				);
 			}
 
-			await db.transact(tx);
+			await db.transact(tx as Parameters<typeof db.transact>[0]);
 			setAnswer("");
 			setStatus(
 				result.grade === "clear"
 					? completesSession
 						? "Session complete. Understanding report saved."
 						: "Clear enough. The next section is open."
-					: "Not clear yet. Revise your answer and try again.",
+					: "Not clear yet. Answer the follow-up, or continue anyway if you accept the weak spot.",
+			);
+		} catch (err) {
+			setError(getErrorMessage(err));
+		} finally {
+			setIsSaving(false);
+		}
+	}
+
+	async function continueAfterFollowUp() {
+		if (!session || !currentChunk || !canOverrideCurrent || !isOwner) return;
+
+		setIsSaving(true);
+		setStatus("");
+		setError("");
+		setAiStream("");
+
+		const completesSession = currentIndex >= chunks.length - 1;
+		let aiReport: AiReport | undefined;
+
+		if (completesSession) {
+			try {
+				aiReport = await streamAiJob(
+					buildReportPayload(chunks, latestResponses),
+					(delta) => setAiStream((current) => `${current}${delta}`),
+				);
+			} catch {
+				setError("AI unavailable. The final report was not generated.");
+				setIsSaving(false);
+				return;
+			}
+		}
+
+		try {
+			const tx: unknown[] = [
+				db.tx.readingSessions[session.id].update(
+					completesSession
+						? {
+								completedAt: Date.now(),
+								currentChunkIndex: currentIndex,
+								status: "completed" as const,
+							}
+						: {
+								currentChunkIndex: Math.min(
+									currentIndex + 1,
+									chunks.length - 1,
+								),
+								status: "active" as const,
+							},
+				),
+			];
+
+			if (completesSession) {
+				const reportId = session.understandingReport?.id ?? id();
+				tx.push(
+					db.tx.understandingReports[reportId]
+						.update({
+							createdAt: Date.now(),
+							keyClaims: aiReport?.keyClaims ?? [],
+							recommendedReview: aiReport?.recommendedReview ?? [],
+							strengths: aiReport?.strengths ?? [],
+							weakSpots: aiReport?.weakSpots ?? [],
+						})
+						.link({ session: session.id }),
+				);
+			}
+
+			await db.transact(tx as Parameters<typeof db.transact>[0]);
+			setAnswer("");
+			setStatus(
+				completesSession
+					? "Session complete with weak spots preserved in the report."
+					: "Moved forward after the AI follow-up. This section stays marked as weak.",
 			);
 		} catch (err) {
 			setError(getErrorMessage(err));
@@ -410,9 +521,11 @@ function ReadingSessionPage() {
 	}
 
 	if (query.error || auth.error) {
-		return (
-			<ErrorPage message={query.error?.message ?? auth.error?.message ?? ""} />
-		);
+		const message =
+			getMaybeErrorMessage(query.error) ??
+			getMaybeErrorMessage(auth.error) ??
+			"";
+		return <ErrorPage message={message} />;
 	}
 
 	if (!session) {
@@ -517,9 +630,21 @@ function ReadingSessionPage() {
 										onClick={submitReflection}
 										className="h-12 w-fit bg-[#11110d] px-5 text-white hover:bg-[#14876d]"
 									>
-										{isSaving ? "Checking" : "Check and save"}
+										{isSaving ? "Streaming AI check" : "Check and save"}
 										<ArrowRight className="size-4" />
 									</Button>
+									{canOverrideCurrent && isOwner ? (
+										<Button
+											type="button"
+											size="lg"
+											disabled={isSaving}
+											onClick={continueAfterFollowUp}
+											className="h-12 w-fit border border-[#17140f]/15 bg-white px-5 text-[#17140f] hover:bg-[#f9f6ef]"
+										>
+											Continue after follow-up
+											<ArrowRight className="size-4" />
+										</Button>
+									) : null}
 								</>
 							)}
 
@@ -569,6 +694,11 @@ function ReadingSessionPage() {
 									<AlertTitle>Saved</AlertTitle>
 									<AlertDescription>{status}</AlertDescription>
 								</Alert>
+							) : null}
+							{isSaving && aiStream ? (
+								<div className="max-h-44 overflow-hidden border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs leading-5 text-white/75">
+									{aiStream.slice(-1200)}
+								</div>
 							) : null}
 							{error ? (
 								<Alert className="border-[#a75d3f]/30 bg-[#fff4ed] text-[#17140f]">
@@ -1182,6 +1312,31 @@ function buildGroupReport(
 	};
 }
 
+function buildReportPayload(
+	chunks: ChunkRecord[],
+	responses: Record<string, ReaderResponse>,
+) {
+	return {
+		chunks: chunks.map((chunk) => ({
+			index: chunk.index,
+			mainClaim: chunk.mainClaim,
+			prompt: chunk.prompt,
+			text: chunk.text,
+		})),
+		job: "report" as const,
+		responses: chunks.flatMap((chunk) => {
+			const response = responses[chunk.id];
+			if (!response) return [];
+			return {
+				answer: response.answer,
+				feedback: response.feedback,
+				grade: response.grade,
+				section: chunk.index + 1,
+			};
+		}),
+	};
+}
+
 function AuthRequired() {
 	return (
 		<main className="grid min-h-dvh place-items-center px-4 py-8">
@@ -1233,6 +1388,19 @@ function getErrorMessage(error: unknown) {
 		return error.body.message;
 	}
 	return "Something went wrong. Try again.";
+}
+
+function getMaybeErrorMessage(error: unknown) {
+	if (error instanceof Error) return error.message;
+	if (
+		error &&
+		typeof error === "object" &&
+		"message" in error &&
+		typeof error.message === "string"
+	) {
+		return error.message;
+	}
+	return undefined;
 }
 
 function getDisplayName(

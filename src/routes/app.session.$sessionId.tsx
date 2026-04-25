@@ -22,7 +22,17 @@ import {
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+	Children,
+	cloneElement,
+	isValidElement,
+	type ReactNode,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +49,7 @@ import type { AiGrade, AiReport } from "@/lib/ai-jobs";
 import { streamAiJob } from "@/lib/ai-stream";
 import { db, isInstantConfigured } from "@/lib/db";
 import {
+	attachSourceMarkdownToChunks,
 	buildReport,
 	type ReaderResponse,
 	type ReadingChunk,
@@ -100,10 +111,13 @@ function ReadingSessionPage() {
 	).find((item) => item.id === sessionId);
 	const chunks = useMemo(
 		() =>
-			[...(session?.post?.chunks ?? [])].sort(
-				(a, b) => Number(a.index ?? 0) - Number(b.index ?? 0),
+			attachSourceMarkdownToChunks(
+				[...(session?.post?.chunks ?? [])].sort(
+					(a, b) => Number(a.index ?? 0) - Number(b.index ?? 0),
+				),
+				session?.post?.body ?? "",
 			),
-		[session?.post?.chunks],
+		[session?.post?.body, session?.post?.chunks],
 	);
 	const userResponses = useMemo(
 		() =>
@@ -1035,7 +1049,7 @@ function FormattedReadingText({
 	redFocusMode: boolean;
 	text: string;
 }) {
-	const blocks = stableTextParts(expandReadingBlocks(text));
+	const components = getReadingMarkdownComponents(redFocusMode);
 
 	return (
 		<div
@@ -1045,170 +1059,108 @@ function FormattedReadingText({
 				lineHeight: 1.85,
 			}}
 		>
-			{blocks.length ? (
-				blocks.map((block) => (
-					<ReadingBlock
-						key={block.key}
-						redFocusMode={redFocusMode}
-						text={block.text}
-					/>
-				))
-			) : (
-				<p>{text}</p>
-			)}
+			<ReactMarkdown components={components}>{text}</ReactMarkdown>
 		</div>
 	);
 }
 
-function ReadingBlock({
-	redFocusMode,
-	text,
-}: {
-	redFocusMode: boolean;
-	text: string;
-}) {
-	const heading = text.match(/^(#{1,3})\s+(.+)/);
-	const bullet = text.match(/^[-*]\s+(.+)/);
-	const numbered = text.match(/^\d+\.\s+(.+)/);
-
-	if (heading) {
-		return (
-			<h3 className="text-3xl font-black leading-tight text-[#17140f]">
-				<InlineReadingText redFocusMode={redFocusMode} text={heading[2]} />
-			</h3>
-		);
-	}
-
-	if (bullet) {
-		return (
-			<div className="grid grid-cols-[1rem_minmax(0,1fr)] gap-3">
-				<span className="mt-3 size-1.5 bg-[#14876d]" />
-				<p>
-					<InlineReadingText redFocusMode={redFocusMode} text={bullet[1]} />
-				</p>
-			</div>
-		);
-	}
-
-	if (numbered) {
-		return (
-			<div className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
-				<span className="font-mono text-sm font-black text-[#14876d]">
-					{text.match(/^\d+/)?.[0]}.
-				</span>
-				<p>
-					<InlineReadingText redFocusMode={redFocusMode} text={numbered[1]} />
-				</p>
-			</div>
-		);
-	}
-
-	return (
-		<p>
-			<InlineReadingText redFocusMode={redFocusMode} text={text} />
-		</p>
-	);
-}
-
-function InlineReadingText({
-	redFocusMode,
-	text,
-}: {
-	redFocusMode: boolean;
-	text: string;
-}) {
-	const segments = stableTextParts(
-		text.split(
-			/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*|_[^_]+_)/g,
-		),
-	);
-
-	return (
-		<>
-			{segments.map((segment) => (
-				<InlineReadingSegment
-					key={segment.key}
-					redFocusMode={redFocusMode}
-					text={segment.text}
-				/>
-			))}
-		</>
-	);
-}
-
-function InlineReadingSegment({
-	redFocusMode,
-	text,
-}: {
-	redFocusMode: boolean;
-	text: string;
-}) {
-	const link = text.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-	if (link) {
-		return (
+function getReadingMarkdownComponents(redFocusMode: boolean): Components {
+	return {
+		a: ({ children, href }) => (
 			<a
-				href={link[2]}
+				href={href}
 				target="_blank"
 				rel="noreferrer"
 				className="font-bold text-[#14876d] underline decoration-[#14876d]/30 underline-offset-4"
 			>
-				<FocusedText redFocusMode={redFocusMode} text={link[1]} />
+				{renderReadingChildren(children, redFocusMode)}
 			</a>
-		);
-	}
-
-	if (text.startsWith("**") && text.endsWith("**")) {
-		return (
-			<strong className="font-black text-[#17140f]">
-				<FocusedText redFocusMode={redFocusMode} text={text.slice(2, -2)} />
-			</strong>
-		);
-	}
-
-	if (text.startsWith("__") && text.endsWith("__")) {
-		return (
-			<strong className="font-black text-[#17140f]">
-				<FocusedText redFocusMode={redFocusMode} text={text.slice(2, -2)} />
-			</strong>
-		);
-	}
-
-	if (text.startsWith("`") && text.endsWith("`")) {
-		return (
-			<code className="border border-[#17140f]/10 bg-white px-1.5 py-0.5 font-mono text-[0.9em] text-[#17140f]">
-				{text.slice(1, -1)}
+		),
+		blockquote: ({ children }) => (
+			<blockquote className="border-l-4 border-[#d0aa57] pl-4 italic text-[#5d574a]">
+				{renderReadingChildren(children, redFocusMode)}
+			</blockquote>
+		),
+		code: ({ children, className }) => (
+			<code
+				className={cn(
+					"border border-[#17140f]/10 bg-white px-1.5 py-0.5 font-mono text-[0.9em] text-[#17140f]",
+					className,
+				)}
+			>
+				{children}
 			</code>
-		);
-	}
-
-	if (
-		(text.startsWith("*") && text.endsWith("*")) ||
-		(text.startsWith("_") && text.endsWith("_"))
-	) {
-		return (
+		),
+		em: ({ children }) => (
 			<em className="text-[#5d574a]">
-				<FocusedText redFocusMode={redFocusMode} text={text.slice(1, -1)} />
+				{renderReadingChildren(children, redFocusMode)}
 			</em>
-		);
-	}
-
-	return <FocusedText redFocusMode={redFocusMode} text={text} />;
+		),
+		h1: ({ children }) => (
+			<h3 className="text-4xl font-black leading-tight text-[#17140f]">
+				{renderReadingChildren(children, redFocusMode)}
+			</h3>
+		),
+		h2: ({ children }) => (
+			<h3 className="text-3xl font-black leading-tight text-[#17140f]">
+				{renderReadingChildren(children, redFocusMode)}
+			</h3>
+		),
+		h3: ({ children }) => (
+			<h3 className="text-2xl font-black leading-tight text-[#17140f]">
+				{renderReadingChildren(children, redFocusMode)}
+			</h3>
+		),
+		hr: () => <hr className="border-[#17140f]/10" />,
+		li: ({ children }) => (
+			<li>{renderReadingChildren(children, redFocusMode)}</li>
+		),
+		ol: ({ children }) => (
+			<ol className="list-decimal space-y-3 pl-6 marker:font-mono marker:font-black marker:text-[#14876d]">
+				{renderReadingChildren(children, redFocusMode)}
+			</ol>
+		),
+		p: ({ children }) => <p>{renderReadingChildren(children, redFocusMode)}</p>,
+		pre: ({ children }) => (
+			<pre className="overflow-x-auto border border-[#17140f]/10 bg-white p-4 font-mono text-[0.9em] text-[#17140f]">
+				{children}
+			</pre>
+		),
+		strong: ({ children }) => (
+			<strong className="font-black text-[#17140f]">
+				{renderReadingChildren(children, redFocusMode)}
+			</strong>
+		),
+		ul: ({ children }) => (
+			<ul className="list-disc space-y-3 pl-6 marker:text-[#14876d]">
+				{renderReadingChildren(children, redFocusMode)}
+			</ul>
+		),
+	};
 }
 
-function expandReadingBlocks(text: string) {
-	return text
-		.split(/\n{2,}/)
-		.flatMap((block) => {
-			const trimmed = block.trim();
-			const lines = trimmed
-				.split(/\n/)
-				.map((line) => line.trim())
-				.filter(Boolean);
-			const isList = lines.every((line) => /^([-*]|\d+\.)\s+/.test(line));
+function renderReadingChildren(
+	children: ReactNode,
+	redFocusMode: boolean,
+): ReactNode {
+	return Children.map(children, (child) => {
+		if (typeof child === "string") {
+			return <FocusedText redFocusMode={redFocusMode} text={child} />;
+		}
 
-			return isList ? lines : [trimmed.replace(/\n+/g, " ")];
-		})
-		.filter(Boolean);
+		if (
+			typeof child === "number" ||
+			!isValidElement<{ children?: ReactNode }>(child)
+		) {
+			return child;
+		}
+
+		return cloneElement(
+			child,
+			undefined,
+			renderReadingChildren(child.props.children, redFocusMode),
+		);
+	});
 }
 
 function FocusedText({
@@ -2004,6 +1956,7 @@ type SessionRecord = {
 		author?: {
 			id: string;
 		};
+		body?: string;
 		chunks?: ChunkRecord[];
 		title?: string;
 	};

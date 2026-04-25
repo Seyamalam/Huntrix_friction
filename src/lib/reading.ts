@@ -86,6 +86,41 @@ export function createChunks(input: string): ReadingChunk[] {
 		});
 }
 
+export function attachSourceMarkdownToChunks(
+	chunks: ReadingChunk[],
+	sourceMarkdown: string,
+): ReadingChunk[] {
+	const blocks = sourceMarkdown
+		.split(/\n{2,}/)
+		.map((block) => ({
+			markdown: block.trim(),
+			plain: markdownToPlainText(block),
+		}))
+		.filter((block) => block.markdown && block.plain);
+
+	if (!blocks.length) return chunks;
+
+	return chunks.map((chunk) => {
+		const chunkWords = wordSet(chunk.text);
+		const matchingBlocks = blocks
+			.map((block) => ({
+				...block,
+				score: overlapScore(chunkWords, wordSet(block.plain)),
+			}))
+			.filter((block) => block.score >= 0.28)
+			.sort((a, b) => b.score - a.score)
+			.slice(0, 3);
+		const markdown = matchingBlocks.length
+			? matchingBlocks.map((block) => block.markdown).join("\n\n")
+			: chunk.markdown?.trim() || chunk.text;
+
+		return {
+			...chunk,
+			markdown,
+		};
+	});
+}
+
 export function gradeAnswer(
 	answer: string,
 	chunk: Pick<ReadingChunk, "text">,
@@ -179,6 +214,40 @@ export function extractKeywords(text: string) {
 		.sort((a, b) => b[1] - a[1])
 		.map(([word]) => word)
 		.slice(0, 10);
+}
+
+function markdownToPlainText(markdown: string) {
+	return markdown
+		.replace(/```[\s\S]*?```/g, " ")
+		.replace(/`([^`]+)`/g, "$1")
+		.replace(/!\[[^\]]*]\([^)]+\)/g, " ")
+		.replace(/\[([^\]]+)]\([^)]+\)/g, "$1")
+		.replace(/^#{1,6}\s+/gm, "")
+		.replace(/^>\s?/gm, "")
+		.replace(/^[-*+]\s+/gm, "")
+		.replace(/^\d+\.\s+/gm, "")
+		.replace(/[*_~#]/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
+}
+
+function wordSet(text: string) {
+	return new Set(
+		text
+			.toLowerCase()
+			.replace(/[^a-z0-9\s-]/g, " ")
+			.split(/\s+/)
+			.filter((word) => word.length > 3),
+	);
+}
+
+function overlapScore(source: Set<string>, candidate: Set<string>) {
+	if (!source.size || !candidate.size) return 0;
+	let overlap = 0;
+	for (const word of candidate) {
+		if (source.has(word)) overlap += 1;
+	}
+	return overlap / Math.min(source.size, candidate.size);
 }
 
 function chunkArray<T>(items: T[], size: number): T[][] {

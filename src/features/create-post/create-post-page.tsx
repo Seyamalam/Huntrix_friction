@@ -40,15 +40,16 @@ export function CreatePostPage() {
 	const auth = db.useAuth();
 	const navigate = useNavigate();
 	const [title, setTitle] = useState(defaultPostTitle);
-	const [body, setBody] = useState(defaultPostBody);
+	const [bodyMarkdown, setBodyMarkdown] = useState(defaultPostBody);
+	const [bodyPlainText, setBodyPlainText] = useState(defaultPostBody);
 	const [mode, setMode] = useState<FrictionMode>("serious");
 	const [visibility, setVisibility] = useState<PostVisibility>("private");
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 	const chunks = useMemo(() => {
-		if (body.trim().length < 240) return [] as ReadingChunk[];
-		return createChunks(body);
-	}, [body]);
+		if (bodyPlainText.trim().length < 240) return [] as ReadingChunk[];
+		return createChunks(bodyPlainText);
+	}, [bodyPlainText]);
 
 	async function createRoom() {
 		if (!auth.user) {
@@ -57,14 +58,15 @@ export function CreatePostPage() {
 		}
 
 		const cleanTitle = title.trim();
-		const cleanBody = body.trim();
+		const cleanBodyMarkdown = bodyMarkdown.trim();
+		const cleanBodyPlainText = bodyPlainText.trim();
 
 		if (!cleanTitle) {
 			setError("Add a title before creating the post.");
 			return;
 		}
 
-		if (cleanBody.length < 240 || chunks.length === 0) {
+		if (cleanBodyPlainText.length < 240 || chunks.length === 0) {
 			setError(
 				"Paste at least a few paragraphs so Unread can make checkpoints.",
 			);
@@ -83,7 +85,7 @@ export function CreatePostPage() {
 			await db.transact([
 				db.tx.posts[postId]
 					.update({
-						body: cleanBody,
+						body: cleanBodyMarkdown,
 						createdAt: now,
 						sourceType: "pasted",
 						title: cleanTitle,
@@ -173,7 +175,10 @@ export function CreatePostPage() {
 
 						<CreatePostBodyField
 							defaultBody={defaultPostBody}
-							onBodyChange={setBody}
+							onBodyChange={({ markdown, plainText }) => {
+								setBodyMarkdown(markdown);
+								setBodyPlainText(plainText);
+							}}
 						/>
 					</FieldGroup>
 				</div>

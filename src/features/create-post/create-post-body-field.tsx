@@ -5,6 +5,7 @@ import { RichEditor } from "@/components/ui/rich-editor";
 
 import {
 	createSerializedStateFromText,
+	getMarkdownFromEditorState,
 	getPlainTextFromEditorState,
 } from "./rich-text";
 
@@ -13,7 +14,7 @@ export function CreatePostBodyField({
 	onBodyChange,
 }: {
 	defaultBody: string;
-	onBodyChange: (body: string) => void;
+	onBodyChange: (body: { markdown: string; plainText: string }) => void;
 }) {
 	const [initialSerializedState] = useState<SerializedEditorState>(() =>
 		createSerializedStateFromText(defaultBody),
@@ -28,7 +29,10 @@ export function CreatePostBodyField({
 			<RichEditor
 				editorSerializedState={initialSerializedState}
 				onChange={(editorState) => {
-					onBodyChange(getPlainTextFromEditorState(editorState));
+					onBodyChange({
+						markdown: getMarkdownFromEditorState(editorState),
+						plainText: getPlainTextFromEditorState(editorState),
+					});
 				}}
 				placeholder="Paste the article, memo, or essay here. Use the toolbar to structure it before publishing."
 				maxLength={20_000}

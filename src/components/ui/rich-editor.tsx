@@ -1,4 +1,3 @@
-import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoFocusExtension, ClearEditorExtension, DecoratorTextExtension, HorizontalRuleExtension, SelectionAlwaysOnDisplayExtension } from "@lexical/extension";
 import { HistoryExtension } from "@lexical/history";
 import { AutoLinkExtension, ClickableLinkExtension, LinkExtension } from "@lexical/link";
@@ -27,17 +26,8 @@ import { LayoutItemNode } from "@/components/editor/nodes/layout-item-node";
 import { MentionNode } from "@/components/editor/nodes/mention-node";
 import { SpecialTextNode } from "@/components/editor/nodes/special-text-node";
 import { ActionsPlugin } from "@/components/editor/plugins/actions/actions-plugin";
-import { ClearEditorActionPlugin } from "@/components/editor/plugins/actions/clear-editor-plugin";
 import { CounterCharacterPlugin } from "@/components/editor/plugins/actions/counter-character-plugin";
-import { EditModeTogglePlugin } from "@/components/editor/plugins/actions/edit-mode-toggle-plugin";
-import { ImportExportPlugin } from "@/components/editor/plugins/actions/import-export-plugin";
-import { MarkdownTogglePlugin } from "@/components/editor/plugins/actions/markdown-toggle-plugin";
-import { ShareContentPlugin } from "@/components/editor/plugins/actions/share-content-plugin";
-import { SpeechToTextPlugin } from "@/components/editor/plugins/actions/speech-to-text-plugin";
-import { TreeViewPlugin } from "@/components/editor/plugins/actions/tree-view-plugin";
 import { AutoCompletePlugin } from "@/components/editor/plugins/auto-complete-plugin";
-import { CodeActionMenuPlugin } from "@/components/editor/plugins/code-action-menu-plugin";
-import { CodeHighlightPlugin } from "@/components/editor/plugins/code-highlight-plugin";
 import { ComponentPickerMenuPlugin } from "@/components/editor/plugins/component-picker-menu-plugin";
 import { ContextMenuPlugin } from "@/components/editor/plugins/context-menu-plugin";
 import { DraggableBlockPlugin } from "@/components/editor/plugins/draggable-block-plugin";
@@ -51,7 +41,6 @@ import { TabFocusPlugin } from "@/components/editor/plugins/tab-focus-plugin";
 import { BlockFormatDropDown } from "@/components/editor/plugins/toolbar/block-format-toolbar-plugin";
 import { FormatBulletedList } from "@/components/editor/plugins/toolbar/block-format/format-bulleted-list";
 import { FormatCheckList } from "@/components/editor/plugins/toolbar/block-format/format-check-list";
-import { FormatCodeBlock } from "@/components/editor/plugins/toolbar/block-format/format-code-block";
 import { FormatHeading } from "@/components/editor/plugins/toolbar/block-format/format-heading";
 import { FormatNumberedList } from "@/components/editor/plugins/toolbar/block-format/format-numbered-list";
 import { FormatParagraph } from "@/components/editor/plugins/toolbar/block-format/format-paragraph";
@@ -61,7 +50,6 @@ import { InsertColumnsLayout } from "@/components/editor/plugins/toolbar/block-i
 import { InsertHorizontalRule } from "@/components/editor/plugins/toolbar/block-insert/insert-horizontal-rule";
 import { InsertTable } from "@/components/editor/plugins/toolbar/block-insert/insert-table";
 import { ClearFormattingToolbarPlugin } from "@/components/editor/plugins/toolbar/clear-formatting-toolbar-plugin";
-import { CodeLanguageToolbarPlugin } from "@/components/editor/plugins/toolbar/code-language-toolbar-plugin";
 import { ElementFormatToolbarPlugin } from "@/components/editor/plugins/toolbar/element-format-toolbar-plugin";
 import { FontBackgroundToolbarPlugin } from "@/components/editor/plugins/toolbar/font-background-toolbar-plugin";
 import { FontColorToolbarPlugin } from "@/components/editor/plugins/toolbar/font-color-toolbar-plugin";
@@ -155,8 +143,6 @@ export function RichEditor({
           MentionNode,
           AutocompleteNode,
           SpecialTextNode,
-          CodeNode,
-          CodeHighlightNode,
           TableNode,
           TableCellNode,
           TableRowNode,
@@ -186,7 +172,7 @@ export function RichEditor({
         <TooltipProvider>
           <div className="relative flex min-h-0 flex-1 flex-col">
             <ToolbarPlugin>
-              {({ blockType }) => (
+              {() => (
                 <div className="vertical-align-middle sticky top-0 z-10 flex shrink-0 items-center gap-2 overflow-auto border-b p-1">
                   <HistoryToolbarPlugin />
                   <Separator orientation="vertical" className="h-7!" />
@@ -196,30 +182,23 @@ export function RichEditor({
                     <FormatNumberedList />
                     <FormatBulletedList />
                     <FormatCheckList />
-                    <FormatCodeBlock />
                     <FormatQuote />
                   </BlockFormatDropDown>
-                  {blockType === "code" ? (
-                    <CodeLanguageToolbarPlugin />
-                  ) : (
-                    <>
-                      <FontFamilyToolbarPlugin />
-                      <Separator orientation="vertical" className="h-7!" />
-                      <FontSizeToolbarPlugin />
-                      <FontFormatToolbarPlugin />
-                      <SubSuperToolbarPlugin />
-                      <LinkToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} />
-                      <ClearFormattingToolbarPlugin />
-                      <FontColorToolbarPlugin />
-                      <FontBackgroundToolbarPlugin />
-                      <ElementFormatToolbarPlugin />
-                      <BlockInsertPlugin>
-                        <InsertHorizontalRule />
-                        <InsertTable />
-                        <InsertColumnsLayout />
-                      </BlockInsertPlugin>
-                    </>
-                  )}
+                  <FontFamilyToolbarPlugin />
+                  <Separator orientation="vertical" className="h-7!" />
+                  <FontSizeToolbarPlugin />
+                  <FontFormatToolbarPlugin />
+                  <SubSuperToolbarPlugin />
+                  <LinkToolbarPlugin setIsLinkEditMode={setIsLinkEditMode} />
+                  <ClearFormattingToolbarPlugin />
+                  <FontColorToolbarPlugin />
+                  <FontBackgroundToolbarPlugin />
+                  <ElementFormatToolbarPlugin />
+                  <BlockInsertPlugin>
+                    <InsertHorizontalRule />
+                    <InsertTable />
+                    <InsertColumnsLayout />
+                  </BlockInsertPlugin>
                 </div>
               )}
             </ToolbarPlugin>
@@ -243,13 +222,11 @@ export function RichEditor({
               <SpecialTextPlugin />
               <TabFocusPlugin />
               <TabIndentationPlugin />
-              <CodeHighlightPlugin />
               <TablePlugin />
               <LayoutPlugin />
               <DraggableBlockPlugin anchorElem={floatingAnchorElem} baseOptions={[]} />
               <FloatingTextFormatToolbarPlugin anchorElem={floatingAnchorElem} setIsLinkEditMode={setIsLinkEditMode} />
               <FloatingLinkEditorPlugin anchorElem={floatingAnchorElem} isLinkEditMode={isLinkEditMode} setIsLinkEditMode={setIsLinkEditMode} />
-              <CodeActionMenuPlugin anchorElem={floatingAnchorElem} />
             </div>
             <ActionsPlugin>
               <div className="clear-both flex shrink-0 items-center justify-between gap-2 overflow-auto border-t p-1">
@@ -260,24 +237,7 @@ export function RichEditor({
                   <CounterCharacterPlugin charset="UTF-16" />
                 </div>
                 {showAdvancedActions ? (
-                  <div className="flex flex-1 justify-end">
-                    <SpeechToTextPlugin />
-                    <ShareContentPlugin />
-                    <ImportExportPlugin />
-                    <MarkdownTogglePlugin
-                      shouldPreserveNewLinesInMarkdown={true}
-                      transformers={[
-                        TABLE, HR, EMOJI, CHECK_LIST,
-                        ...ELEMENT_TRANSFORMERS,
-                        ...MULTILINE_ELEMENT_TRANSFORMERS,
-                        ...TEXT_FORMAT_TRANSFORMERS,
-                        ...TEXT_MATCH_TRANSFORMERS,
-                      ]}
-                    />
-                    <EditModeTogglePlugin />
-                    <ClearEditorActionPlugin />
-                    <TreeViewPlugin />
-                  </div>
+                  <div className="flex flex-1 justify-end" />
                 ) : (
                   <div className="flex flex-1" />
                 )}

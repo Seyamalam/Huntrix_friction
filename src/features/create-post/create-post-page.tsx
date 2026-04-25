@@ -8,7 +8,7 @@ import {
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +34,12 @@ import {
 	modeCopy,
 	type PostVisibility,
 } from "./constants";
-import { CreatePostBodyField } from "./create-post-body-field";
+
+const CreatePostBodyField = lazy(() =>
+	import("./create-post-body-field").then((module) => ({
+		default: module.CreatePostBodyField,
+	})),
+);
 
 export function CreatePostPage() {
 	const auth = db.useAuth();
@@ -290,17 +295,19 @@ export function CreatePostPage() {
 							</Tabs>
 						</div>
 
-						<CreatePostBodyField
-							key={bodyRevision}
-							defaultBody={bodySeed}
-							onBodyChange={({ markdown, plainText }) => {
-								setBodyMarkdown(markdown);
-								setBodyPlainText(plainText);
-								if (plainText.trim() !== bodySeed.trim()) {
-									setImportedUrl("");
-								}
-							}}
-						/>
+						<Suspense fallback={<EditorLoadingState />}>
+							<CreatePostBodyField
+								key={bodyRevision}
+								defaultBody={bodySeed}
+								onBodyChange={({ markdown, plainText }) => {
+									setBodyMarkdown(markdown);
+									setBodyPlainText(plainText);
+									if (plainText.trim() !== bodySeed.trim()) {
+										setImportedUrl("");
+									}
+								}}
+							/>
+						</Suspense>
 					</FieldGroup>
 				</div>
 
@@ -416,6 +423,27 @@ export function CreatePostPage() {
 				</aside>
 			</section>
 		</main>
+	);
+}
+
+function EditorLoadingState() {
+	return (
+		<Field className="min-h-0 flex-1">
+			<FieldLabel>Body</FieldLabel>
+			<div className="grid min-h-[28rem] place-items-center border border-[#17140f]/15 bg-[#f9f6ef] p-5">
+				<div className="w-full max-w-xl">
+					<div className="h-4 w-36 bg-[#17140f]/14" />
+					<div className="mt-5 grid gap-3">
+						<div className="h-4 w-full bg-[#17140f]/10" />
+						<div className="h-4 w-11/12 bg-[#17140f]/10" />
+						<div className="h-4 w-4/5 bg-[#17140f]/10" />
+					</div>
+					<p className="mt-8 font-mono text-xs uppercase tracking-[0.16em] text-[#5d574a]">
+						Loading editor
+					</p>
+				</div>
+			</div>
+		</Field>
 	);
 }
 

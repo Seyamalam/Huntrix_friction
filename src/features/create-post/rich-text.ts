@@ -1,8 +1,30 @@
 import {
+	$convertToMarkdownString,
+	CHECK_LIST,
+	ELEMENT_TRANSFORMERS,
+	MULTILINE_ELEMENT_TRANSFORMERS,
+	TEXT_FORMAT_TRANSFORMERS,
+	TEXT_MATCH_TRANSFORMERS,
+} from "@lexical/markdown";
+import {
 	$getRoot,
 	type EditorState,
 	type SerializedEditorState,
 } from "lexical";
+import { EMOJI } from "@/components/editor/transformers/markdown-emoji-transformer";
+import { HR } from "@/components/editor/transformers/markdown-hr-transformer";
+import { TABLE } from "@/components/editor/transformers/markdown-table-transformer";
+
+const MARKDOWN_TRANSFORMERS = [
+	TABLE,
+	HR,
+	EMOJI,
+	CHECK_LIST,
+	...ELEMENT_TRANSFORMERS,
+	...MULTILINE_ELEMENT_TRANSFORMERS,
+	...TEXT_FORMAT_TRANSFORMERS,
+	...TEXT_MATCH_TRANSFORMERS,
+];
 
 function createTextNode(text: string) {
 	return {
@@ -64,4 +86,14 @@ export function getPlainTextFromEditorState(editorState: EditorState) {
 	});
 
 	return plainText;
+}
+
+export function getMarkdownFromEditorState(editorState: EditorState) {
+	let markdown = "";
+
+	editorState.read(() => {
+		markdown = $convertToMarkdownString(MARKDOWN_TRANSFORMERS, undefined, true);
+	});
+
+	return markdown;
 }

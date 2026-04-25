@@ -671,7 +671,12 @@ function ReadingSessionPage() {
 						: "xl:grid-cols-[minmax(0,1fr)_minmax(21rem,24rem)]",
 				)}
 			>
-				<div className="flex min-h-0 flex-col border border-[#17140f]/10 bg-white text-[#17140f]">
+				<div
+					className={cn(
+						"flex min-h-0 min-w-0 flex-col border border-[#17140f]/10 bg-white text-[#17140f]",
+						!isZenMode && "overflow-y-auto",
+					)}
+				>
 					<header className="shrink-0 border-b border-[#17140f]/10 bg-white/95 p-4 backdrop-blur">
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							{isZenMode ? (
@@ -748,8 +753,8 @@ function ReadingSessionPage() {
 					</header>
 
 					{currentChunk ? (
-						<div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
-							<article className="min-h-0 overflow-y-auto bg-[#fbf8f1] px-5 py-6 sm:px-8 lg:px-12">
+						<div className="flex flex-col">
+							<article className="bg-[#fbf8f1] px-5 py-6 sm:px-8 lg:px-12">
 								<div className="mx-auto max-w-4xl">
 									<div className="flex flex-wrap gap-2">
 										<Badge className="rounded-none bg-[#11110d] text-white">
@@ -775,7 +780,7 @@ function ReadingSessionPage() {
 								</div>
 							</article>
 
-							<div className="max-h-[42dvh] overflow-y-auto border-t border-[#17140f]/10 bg-white p-4">
+							<div className="border-t border-[#17140f]/10 bg-white p-4">
 								<div className="mx-auto grid max-w-4xl gap-4">
 									{isComplete ? (
 										<Alert className="border-[#14876d]/25 bg-[#effaf2] text-[#17140f]">

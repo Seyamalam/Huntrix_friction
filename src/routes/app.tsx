@@ -11,7 +11,6 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { db } from "@/lib/db";
-import { DevSeedRidiculousPostsButton } from "@/lib/devSeedRidiculousPosts";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
@@ -75,7 +74,7 @@ function AppLayout() {
 					</div>
 					{auth.user ? (
 						<>
-							<DevSeedRidiculousPostsButton userId={auth.user.id} />
+							{/* <DevSeedRidiculousPostsButton userId={auth.user.id} /> */}
 							<Button
 								type="button"
 								variant="ghost"

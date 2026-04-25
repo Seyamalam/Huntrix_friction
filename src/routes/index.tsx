@@ -199,7 +199,7 @@ function HomePage() {
 						We built Unread to study productive friction because fake
 						understanding is easier than reading.
 					</p>
-					<h1 className="mt-5 max-w-6xl text-[clamp(3.6rem,10vw,9.6rem)] font-black leading-[0.76] text-balance">
+					<h1 className="mt-5 max-w-6xl text-8xl font-black leading-[0.85] text-balance">
 						AI should stop you from pretending you read.
 					</h1>
 					<p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--unread-ink-soft)]">

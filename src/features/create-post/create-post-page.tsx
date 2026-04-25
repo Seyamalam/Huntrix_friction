@@ -25,7 +25,11 @@ import type { AiChunks } from "@/lib/ai-jobs";
 import { streamAiJob } from "@/lib/ai-stream";
 import { importArticleFromUrl } from "@/lib/article-import";
 import { db, isInstantConfigured } from "@/lib/db";
-import type { FrictionMode, ReadingChunk } from "@/lib/reading";
+import {
+	attachSourceMarkdownToChunks,
+	type FrictionMode,
+	type ReadingChunk,
+} from "@/lib/reading";
 import { cn } from "@/lib/utils";
 
 import {
@@ -147,7 +151,7 @@ export function CreatePostPage() {
 					setAiStream((current) => `${current}${delta}`);
 				},
 			);
-			const generatedChunks = attachMarkdownToChunks(
+			const generatedChunks = attachSourceMarkdownToChunks(
 				normalizeAiChunks(aiChunks),
 				cleanBodyMarkdown,
 			);
@@ -462,77 +466,6 @@ function normalizeAiChunks(result: AiChunks): ReadingChunk[] {
 			prompt: chunk.prompt.trim(),
 			text: chunk.text.trim(),
 		}));
-}
-
-function attachMarkdownToChunks(
-	chunks: ReadingChunk[],
-	sourceMarkdown: string,
-): ReadingChunk[] {
-	const blocks = sourceMarkdown
-		.split(/\n{2,}/)
-		.map((block) => ({
-			markdown: block.trim(),
-			plain: markdownToPlainText(block),
-		}))
-		.filter((block) => block.markdown && block.plain);
-
-	if (!blocks.length) return chunks;
-
-	return chunks.map((chunk) => {
-		if (chunk.markdown?.trim()) return chunk;
-
-		const chunkWords = wordSet(chunk.text);
-		const matchingBlocks = blocks
-			.map((block) => ({
-				...block,
-				score: overlapScore(chunkWords, wordSet(block.plain)),
-			}))
-			.filter((block) => block.score >= 0.28)
-			.sort((a, b) => b.score - a.score)
-			.slice(0, 3);
-		const markdown = matchingBlocks.length
-			? matchingBlocks.map((block) => block.markdown).join("\n\n")
-			: chunk.text;
-
-		return {
-			...chunk,
-			markdown,
-		};
-	});
-}
-
-function markdownToPlainText(markdown: string) {
-	return markdown
-		.replace(/```[\s\S]*?```/g, " ")
-		.replace(/`([^`]+)`/g, "$1")
-		.replace(/!\[[^\]]*]\([^)]+\)/g, " ")
-		.replace(/\[([^\]]+)]\([^)]+\)/g, "$1")
-		.replace(/^#{1,6}\s+/gm, "")
-		.replace(/^>\s?/gm, "")
-		.replace(/^[-*+]\s+/gm, "")
-		.replace(/^\d+\.\s+/gm, "")
-		.replace(/[*_~#]/g, "")
-		.replace(/\s+/g, " ")
-		.trim();
-}
-
-function wordSet(text: string) {
-	return new Set(
-		text
-			.toLowerCase()
-			.replace(/[^a-z0-9\s-]/g, " ")
-			.split(/\s+/)
-			.filter((word) => word.length > 3),
-	);
-}
-
-function overlapScore(source: Set<string>, candidate: Set<string>) {
-	if (!source.size || !candidate.size) return 0;
-	let overlap = 0;
-	for (const word of candidate) {
-		if (source.has(word)) overlap += 1;
-	}
-	return overlap / Math.min(source.size, candidate.size);
 }
 
 function getErrorMessage(error: unknown) {

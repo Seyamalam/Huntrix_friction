@@ -638,7 +638,7 @@ Priority order:
 - [x] Add collaborative reading rooms with avatars, cursors, typing indicators, and shared answers.
 - [x] Add session sharing/access controls.
 - [x] Add section comments and facilitator controls.
-- [ ] Generate chunks, prompts, grades, and reports with an LLM.
-- [ ] Add URL extraction for article imports.
+- [x] Generate chunks, prompts, grades, and reports with an LLM.
+- [x] Add URL extraction for article imports.
 - [ ] Build the public post reader route.
 - [ ] Add real author analytics.

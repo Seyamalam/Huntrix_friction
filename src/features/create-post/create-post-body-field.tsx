@@ -24,7 +24,7 @@ export function CreatePostBodyField({
 		<Field className="min-h-0 flex-1">
 			<FieldLabel>Body</FieldLabel>
 			<FieldDescription className="text-[#5d574a]">
-				Unread will create 5 to 8 local checkpoints from this text.
+				Unread will stream 5 to 8 AI checkpoints from this text.
 			</FieldDescription>
 			<RichEditor
 				editorSerializedState={initialSerializedState}

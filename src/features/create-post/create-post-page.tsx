@@ -3,6 +3,7 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	FileText,
+	LinkSimple,
 	LockKey,
 	WarningCircle,
 } from "@phosphor-icons/react";
@@ -22,6 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AiChunks } from "@/lib/ai-jobs";
 import { streamAiJob } from "@/lib/ai-stream";
+import { importArticleFromUrl } from "@/lib/article-import";
 import { db, isInstantConfigured } from "@/lib/db";
 import type { FrictionMode, ReadingChunk } from "@/lib/reading";
 import { cn } from "@/lib/utils";
@@ -38,15 +40,59 @@ export function CreatePostPage() {
 	const auth = db.useAuth();
 	const navigate = useNavigate();
 	const [title, setTitle] = useState(defaultPostTitle);
+	const [bodySeed, setBodySeed] = useState(defaultPostBody);
+	const [bodyRevision, setBodyRevision] = useState(0);
 	const [bodyMarkdown, setBodyMarkdown] = useState(defaultPostBody);
 	const [bodyPlainText, setBodyPlainText] = useState(defaultPostBody);
 	const [mode, setMode] = useState<FrictionMode>("serious");
 	const [visibility, setVisibility] = useState<PostVisibility>("private");
+	const [sourceMode, setSourceMode] = useState<"paste" | "url">("paste");
+	const [sourceUrl, setSourceUrl] = useState("");
+	const [importedUrl, setImportedUrl] = useState("");
 	const [error, setError] = useState("");
+	const [importStatus, setImportStatus] = useState("");
+	const [isImporting, setIsImporting] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [chunks, setChunks] = useState<ReadingChunk[]>([]);
 	const [aiStream, setAiStream] = useState("");
 	const [aiThinkingTokens, setAiThinkingTokens] = useState(0);
+
+	async function importUrl() {
+		if (!sourceUrl.trim()) {
+			setError("Paste an article URL first.");
+			return;
+		}
+
+		setIsImporting(true);
+		setError("");
+		setImportStatus("Importing article text...");
+		setAiStream("");
+		setAiThinkingTokens(0);
+
+		try {
+			const article = await importArticleFromUrl({ data: { url: sourceUrl } });
+			setTitle((current) => {
+				const trimmed = current.trim();
+				return !trimmed || trimmed === defaultPostTitle
+					? article.title
+					: current;
+			});
+			setBodySeed(article.text);
+			setBodyMarkdown(article.text);
+			setBodyPlainText(article.text);
+			setBodyRevision((current) => current + 1);
+			setImportedUrl(article.url);
+			setImportStatus(
+				`Imported ${article.text.length.toLocaleString()} characters from ${new URL(article.url).hostname}.`,
+			);
+		} catch (err) {
+			setImportedUrl("");
+			setImportStatus("");
+			setError(getErrorMessage(err));
+		} finally {
+			setIsImporting(false);
+		}
+	}
 
 	async function createRoom() {
 		if (!auth.user) {
@@ -105,7 +151,7 @@ export function CreatePostPage() {
 					.update({
 						body: cleanBodyMarkdown,
 						createdAt: now,
-						sourceType: "pasted",
+						sourceType: importedUrl ? "url" : "pasted",
 						title: cleanTitle,
 						updatedAt: now,
 						visibility,
@@ -195,11 +241,64 @@ export function CreatePostPage() {
 							/>
 						</Field>
 
+						<div className="grid gap-3">
+							<Tabs
+								value={sourceMode}
+								onValueChange={(value) =>
+									setSourceMode(value as "paste" | "url")
+								}
+							>
+								<TabsList className="grid h-auto w-full max-w-sm grid-cols-2 bg-[#17140f]/8 p-1">
+									<TabsTrigger
+										value="paste"
+										className="text-[#5d574a] data-active:bg-[#11110d] data-active:text-white"
+									>
+										Paste text
+									</TabsTrigger>
+									<TabsTrigger
+										value="url"
+										className="text-[#5d574a] data-active:bg-[#11110d] data-active:text-white"
+									>
+										Import URL
+									</TabsTrigger>
+								</TabsList>
+								<TabsContent value="url" className="mt-3">
+									<div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+										<Input
+											type="url"
+											value={sourceUrl}
+											onChange={(event) => setSourceUrl(event.target.value)}
+											placeholder="https://example.com/article"
+											className="h-11 border-[#17140f]/15 bg-[#f9f6ef]"
+										/>
+										<Button
+											type="button"
+											disabled={isImporting || isSaving}
+											onClick={importUrl}
+											className="h-11 bg-[#11110d] text-white hover:bg-[#14876d]"
+										>
+											{isImporting ? "Importing" : "Import"}
+											<LinkSimple className="size-4" />
+										</Button>
+									</div>
+									{importStatus ? (
+										<p className="mt-2 text-sm text-[#5d574a]">
+											{importStatus}
+										</p>
+									) : null}
+								</TabsContent>
+							</Tabs>
+						</div>
+
 						<CreatePostBodyField
-							defaultBody={defaultPostBody}
+							key={bodyRevision}
+							defaultBody={bodySeed}
 							onBodyChange={({ markdown, plainText }) => {
 								setBodyMarkdown(markdown);
 								setBodyPlainText(plainText);
+								if (plainText.trim() !== bodySeed.trim()) {
+									setImportedUrl("");
+								}
 							}}
 						/>
 					</FieldGroup>
@@ -308,7 +407,9 @@ export function CreatePostPage() {
 						>
 							{isSaving
 								? "Streaming AI checkpoints"
-								: "Create session and start"}
+								: importedUrl
+									? "Create imported session"
+									: "Create session and start"}
 							<ArrowRight className="size-4" />
 						</Button>
 					</div>

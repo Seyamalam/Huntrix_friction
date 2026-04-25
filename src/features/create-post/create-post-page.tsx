@@ -46,6 +46,7 @@ export function CreatePostPage() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [chunks, setChunks] = useState<ReadingChunk[]>([]);
 	const [aiStream, setAiStream] = useState("");
+	const [aiThinking, setAiThinking] = useState("");
 
 	async function createRoom() {
 		if (!auth.user) {
@@ -72,6 +73,7 @@ export function CreatePostPage() {
 		setIsSaving(true);
 		setError("");
 		setAiStream("");
+		setAiThinking("");
 		setChunks([]);
 
 		const now = Date.now();
@@ -86,7 +88,13 @@ export function CreatePostPage() {
 					mode,
 					title: cleanTitle,
 				},
-				(delta) => setAiStream((current) => `${current}${delta}`),
+				(delta, kind) => {
+					if (kind === "thinking") {
+						setAiThinking((current) => `${current}${delta}`);
+						return;
+					}
+					setAiStream((current) => `${current}${delta}`);
+				},
 			);
 			const generatedChunks = normalizeAiChunks(aiChunks);
 			const chunkIds = generatedChunks.map(() => id());
@@ -132,7 +140,7 @@ export function CreatePostPage() {
 		} catch (err) {
 			setError(
 				err instanceof Error && err.message === "AI unavailable."
-					? "AI unavailable. Check OPENROUTER_API_KEY or try again later."
+					? "AI unavailable. Check provider limits or try again later."
 					: getErrorMessage(err),
 			);
 		} finally {
@@ -277,6 +285,16 @@ export function CreatePostPage() {
 								<div className="max-h-40 overflow-hidden border border-white/18 bg-white/8 p-3 font-mono text-xs leading-5 text-white/75">
 									{aiStream.slice(-900)}
 								</div>
+							) : null}
+							{isSaving && aiThinking ? (
+								<details className="border border-white/18 bg-white/8 p-3 text-xs text-white/75">
+									<summary className="cursor-pointer font-mono uppercase tracking-[0.14em] text-[#d0aa57]">
+										thinking
+									</summary>
+									<p className="mt-2 max-h-32 overflow-hidden font-mono leading-5">
+										{aiThinking.slice(-700)}
+									</p>
+								</details>
 							) : null}
 						</div>
 						{error ? (

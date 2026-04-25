@@ -75,6 +75,7 @@ function ReadingSessionPage() {
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 	const [aiStream, setAiStream] = useState("");
+	const [aiThinking, setAiThinking] = useState("");
 	const [comment, setComment] = useState("");
 	const [facilitatorNote, setFacilitatorNote] = useState("");
 	const [copied, setCopied] = useState(false);
@@ -206,6 +207,7 @@ function ReadingSessionPage() {
 		setStatus("");
 		setError("");
 		setAiStream("");
+		setAiThinking("");
 
 		let result: AiGrade;
 		try {
@@ -217,10 +219,16 @@ function ReadingSessionPage() {
 					mode: session.mode,
 					prompt: currentChunk.prompt,
 				},
-				(delta) => setAiStream((current) => `${current}${delta}`),
+				(delta, kind) => {
+					if (kind === "thinking") {
+						setAiThinking((current) => `${current}${delta}`);
+						return;
+					}
+					setAiStream((current) => `${current}${delta}`);
+				},
 			);
-		} catch {
-			setError("AI unavailable. Check OPENROUTER_API_KEY or try again later.");
+		} catch (err) {
+			setError(getAiErrorMessage(err));
 			setIsSaving(false);
 			return;
 		}
@@ -252,11 +260,17 @@ function ReadingSessionPage() {
 			try {
 				aiReport = await streamAiJob(
 					buildReportPayload(chunks, nextResponseMap),
-					(delta) => setAiStream((current) => `${current}${delta}`),
+					(delta, kind) => {
+						if (kind === "thinking") {
+							setAiThinking((current) => `${current}${delta}`);
+							return;
+						}
+						setAiStream((current) => `${current}${delta}`);
+					},
 				);
-			} catch {
+			} catch (err) {
 				setError(
-					"AI unavailable. The answer was checked, but the report was not generated.",
+					`${getAiErrorMessage(err)} The answer was checked, but the report was not generated.`,
 				);
 				setIsSaving(false);
 				return;
@@ -333,6 +347,7 @@ function ReadingSessionPage() {
 		setStatus("");
 		setError("");
 		setAiStream("");
+		setAiThinking("");
 
 		const completesSession = currentIndex >= chunks.length - 1;
 		let aiReport: AiReport | undefined;
@@ -341,10 +356,18 @@ function ReadingSessionPage() {
 			try {
 				aiReport = await streamAiJob(
 					buildReportPayload(chunks, latestResponses),
-					(delta) => setAiStream((current) => `${current}${delta}`),
+					(delta, kind) => {
+						if (kind === "thinking") {
+							setAiThinking((current) => `${current}${delta}`);
+							return;
+						}
+						setAiStream((current) => `${current}${delta}`);
+					},
 				);
-			} catch {
-				setError("AI unavailable. The final report was not generated.");
+			} catch (err) {
+				setError(
+					`${getAiErrorMessage(err)} The final report was not generated.`,
+				);
 				setIsSaving(false);
 				return;
 			}
@@ -699,6 +722,16 @@ function ReadingSessionPage() {
 								<div className="max-h-44 overflow-hidden border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs leading-5 text-white/75">
 									{aiStream.slice(-1200)}
 								</div>
+							) : null}
+							{isSaving && aiThinking ? (
+								<details className="border border-[#17140f]/10 bg-[#11110d] p-4 text-white/75">
+									<summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.14em] text-[#d0aa57]">
+										AI thinking
+									</summary>
+									<p className="mt-3 max-h-36 overflow-hidden font-mono text-xs leading-5">
+										{aiThinking.slice(-900)}
+									</p>
+								</details>
 							) : null}
 							{error ? (
 								<Alert className="border-[#a75d3f]/30 bg-[#fff4ed] text-[#17140f]">
@@ -1388,6 +1421,14 @@ function getErrorMessage(error: unknown) {
 		return error.body.message;
 	}
 	return "Something went wrong. Try again.";
+}
+
+function getAiErrorMessage(error: unknown) {
+	const message = getMaybeErrorMessage(error);
+	if (!message || message === "AI unavailable.") {
+		return "AI unavailable. Check provider limits or try again later.";
+	}
+	return message;
 }
 
 function getMaybeErrorMessage(error: unknown) {

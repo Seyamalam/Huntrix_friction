@@ -38,7 +38,8 @@ async function* createAiStream(
 			modelOptions: {
 				reasoning: {
 					effort: model === AI_PRIMARY_MODEL ? "low" : "none",
-					exclude: true,
+					exclude: false,
+					max_tokens: model === AI_PRIMARY_MODEL ? 512 : undefined,
 				},
 				temperature: payload.job === "grade" ? 0.15 : 0.35,
 			},

@@ -1,10 +1,10 @@
 import {
-	ArrowRight,
-	BookOpenText,
-	FileText,
-	House,
-	Plus,
-	SignOut,
+	ArrowRightIcon,
+	BookOpenTextIcon,
+	FileTextIcon,
+	HouseIcon,
+	PlusIcon,
+	SignOutIcon,
 } from "@phosphor-icons/react";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
@@ -16,9 +16,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
 const appNav = [
-	{ icon: House, label: "Dashboard", to: "/app" },
-	{ icon: Plus, label: "New session", to: "/app/create" },
-	{ icon: FileText, label: "Public posts", to: "/blogs" },
+	{ icon: HouseIcon, label: "Dashboard", to: "/app" },
+	{ icon: PlusIcon, label: "New session", to: "/app/create" },
+	{ icon: FileTextIcon, label: "Public posts", to: "/blogs" },
 ] as const;
 
 function AppLayout() {
@@ -30,7 +30,7 @@ function AppLayout() {
 				<div className="border-b border-white/10 p-5">
 					<Link to="/app" className="flex items-center gap-3">
 						<span className="flex size-10 items-center justify-center bg-[#f4efe4] text-[#11110d]">
-							<BookOpenText className="size-5" />
+							<BookOpenTextIcon className="size-5" />
 						</span>
 						<span>
 							<span className="block text-lg font-black leading-none">
@@ -65,7 +65,7 @@ function AppLayout() {
 				</nav>
 
 				<div className="mt-auto border-t border-white/10 p-4">
-					<div className="border border-white/10 bg-white/[0.055] p-3">
+					<div className="border border-white/10 bg-white/5.5 p-3">
 						<p className="text-xs text-[#d6cbbb]">Signed in as</p>
 						<p className="mt-1 truncate text-sm font-semibold">
 							{auth.user?.email ?? "Not signed in"}
@@ -80,7 +80,7 @@ function AppLayout() {
 								className="mt-3 h-11 w-full justify-start text-[#f4efe4] hover:bg-white/10 hover:text-white"
 								onClick={() => db.auth.signOut()}
 							>
-								<SignOut className="size-4" />
+								<SignOutIcon className="size-4" />
 								Log out
 							</Button>
 						</>
@@ -93,7 +93,7 @@ function AppLayout() {
 							)}
 						>
 							Sign in
-							<ArrowRight className="size-4" />
+							<ArrowRightIcon className="size-4" />
 						</Link>
 					)}
 				</div>
@@ -102,7 +102,7 @@ function AppLayout() {
 			<header className="sticky top-0 z-40 border-b border-[#17140f]/10 bg-[#f5f1e8]/92 px-4 py-3 backdrop-blur-xl lg:hidden">
 				<div className="flex items-center justify-between gap-3">
 					<Link to="/app" className="flex items-center gap-2 font-black">
-						<BookOpenText className="size-5" />
+						<BookOpenTextIcon className="size-5" />
 						Unread
 					</Link>
 					<div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ function AppLayout() {
 								"h-9 bg-[#11110d] text-white hover:bg-[#14876d]",
 							)}
 						>
-							<Plus className="size-4" />
+							<PlusIcon className="size-4" />
 						</Link>
 						{auth.user ? (
 							<Button
@@ -123,7 +123,7 @@ function AppLayout() {
 								className="h-9 border-[#17140f]/20 bg-transparent"
 								onClick={() => db.auth.signOut()}
 							>
-								<SignOut className="size-4" />
+								<SignOutIcon className="size-4" />
 							</Button>
 						) : null}
 					</div>

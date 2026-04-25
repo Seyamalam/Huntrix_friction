@@ -33,19 +33,23 @@ async function* createAiStream(
 		const stream = chat({
 			adapter: openRouterText(model as never),
 			abortController,
-			maxTokens: payload.job === "chunk" ? 2600 : 1200,
+			maxTokens: getMaxTokens(payload.job),
 			messages: [{ role: "user", content: buildPrompt(payload) }],
 			modelOptions: {
 				reasoning: {
-					effort: model === AI_PRIMARY_MODEL ? "low" : "none",
+					effort: model === AI_PRIMARY_MODEL ? "minimal" : "none",
 					exclude: false,
-					max_tokens: model === AI_PRIMARY_MODEL ? 512 : undefined,
+					max_tokens:
+						model === AI_PRIMARY_MODEL
+							? getReasoningBudget(payload.job)
+							: undefined,
 				},
 				temperature: payload.job === "grade" ? 0.15 : 0.35,
 			},
 			systemPrompts: [
 				"You power Unread, an anti-summary reading product.",
 				"Return only strict JSON. Do not wrap it in markdown. Do not add commentary.",
+				"Keep reasoning brief. The final answer must be visible JSON text.",
 				"Use concise language. Do not solve the reading for the user.",
 			],
 		} as never) as AsyncIterable<StreamChunk>;
@@ -67,6 +71,17 @@ async function* createAiStream(
 		error: { message: "AI unavailable." },
 		message: "AI unavailable.",
 	} as StreamChunk;
+}
+
+function getMaxTokens(job: AiJobPayload["job"]) {
+	if (job === "chunk") return 4200;
+	if (job === "report") return 2400;
+	return 1800;
+}
+
+function getReasoningBudget(job: AiJobPayload["job"]) {
+	if (job === "chunk") return 192;
+	return 128;
 }
 
 function buildPrompt(payload: AiJobPayload) {
@@ -99,8 +114,12 @@ Grades:
 
 Mode: ${payload.mode}
 
-Return JSON:
-{"grade":"clear|vague|incorrect","feedback":"one or two useful sentences","followUp":"one short Socratic question if grade is vague or incorrect"}
+Return a JSON object with:
+- grade: exactly one of clear, vague, incorrect.
+- feedback: one or two specific sentences about this answer.
+- followUp: one short Socratic question if grade is vague or incorrect.
+
+Do not copy these field instructions into the JSON values.
 
 Section:
 ${payload.chunkText}

@@ -128,16 +128,25 @@ export function normalizeAiGrade(input: unknown): AiGrade {
 	const data = input && typeof input === "object" ? input : {};
 	const record = data as Record<string, unknown>;
 	const rawGrade = String(record.grade ?? record.result ?? "").toLowerCase();
-	const grade = rawGrade.includes("clear")
-		? "clear"
-		: rawGrade.includes("incorrect")
-			? "incorrect"
-			: "vague";
+	const grade =
+		rawGrade === "clear"
+			? "clear"
+			: rawGrade === "incorrect"
+				? "incorrect"
+				: rawGrade === "vague"
+					? "vague"
+					: rawGrade.includes("|")
+						? "vague"
+						: rawGrade.includes("clear")
+							? "clear"
+							: rawGrade.includes("incorrect")
+								? "incorrect"
+								: "vague";
 	const feedback = cleanString(
 		record.feedback ?? record.reason ?? record.explanation,
 		"The AI checked this answer, but returned very brief feedback.",
 	);
-	const followUp =
+	const rawFollowUp =
 		grade === "clear"
 			? undefined
 			: cleanOptionalString(
@@ -146,12 +155,34 @@ export function normalizeAiGrade(input: unknown): AiGrade {
 						record.question ??
 						record.nextQuestion,
 				);
+	const followUp =
+		rawFollowUp && isCopiedFollowUpInstruction(rawFollowUp)
+			? "What exact claim from the section is your answer trying to restate?"
+			: rawFollowUp;
 
 	return aiGradeSchema.parse({
-		feedback,
+		feedback: isCopiedGradeInstruction(feedback)
+			? "The answer is relevant but still too generic about the section's claim."
+			: feedback,
 		followUp,
 		grade,
 	});
+}
+
+function isCopiedGradeInstruction(value: string) {
+	const text = value.toLowerCase();
+	return (
+		text.includes("one or two useful sentences") ||
+		text.includes("one or two specific sentences about this answer")
+	);
+}
+
+function isCopiedFollowUpInstruction(value: string) {
+	const text = value.toLowerCase();
+	return (
+		text.includes("one short socratic question") ||
+		text.includes("if grade is vague or incorrect")
+	);
 }
 
 export function normalizeAiChunks(input: unknown): AiChunks {

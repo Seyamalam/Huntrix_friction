@@ -75,7 +75,7 @@ function ReadingSessionPage() {
 	const [error, setError] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 	const [aiStream, setAiStream] = useState("");
-	const [aiThinking, setAiThinking] = useState("");
+	const [aiThinkingTokens, setAiThinkingTokens] = useState(0);
 	const [comment, setComment] = useState("");
 	const [facilitatorNote, setFacilitatorNote] = useState("");
 	const [copied, setCopied] = useState(false);
@@ -207,7 +207,7 @@ function ReadingSessionPage() {
 		setStatus("");
 		setError("");
 		setAiStream("");
-		setAiThinking("");
+		setAiThinkingTokens(0);
 
 		let result: AiGrade;
 		try {
@@ -221,7 +221,7 @@ function ReadingSessionPage() {
 				},
 				(delta, kind) => {
 					if (kind === "thinking") {
-						setAiThinking((current) => `${current}${delta}`);
+						setAiThinkingTokens((current) => current + 1);
 						return;
 					}
 					setAiStream((current) => `${current}${delta}`);
@@ -262,7 +262,7 @@ function ReadingSessionPage() {
 					buildReportPayload(chunks, nextResponseMap),
 					(delta, kind) => {
 						if (kind === "thinking") {
-							setAiThinking((current) => `${current}${delta}`);
+							setAiThinkingTokens((current) => current + 1);
 							return;
 						}
 						setAiStream((current) => `${current}${delta}`);
@@ -347,7 +347,7 @@ function ReadingSessionPage() {
 		setStatus("");
 		setError("");
 		setAiStream("");
-		setAiThinking("");
+		setAiThinkingTokens(0);
 
 		const completesSession = currentIndex >= chunks.length - 1;
 		let aiReport: AiReport | undefined;
@@ -358,7 +358,7 @@ function ReadingSessionPage() {
 					buildReportPayload(chunks, latestResponses),
 					(delta, kind) => {
 						if (kind === "thinking") {
-							setAiThinking((current) => `${current}${delta}`);
+							setAiThinkingTokens((current) => current + 1);
 							return;
 						}
 						setAiStream((current) => `${current}${delta}`);
@@ -723,15 +723,10 @@ function ReadingSessionPage() {
 									{aiStream.slice(-1200)}
 								</div>
 							) : null}
-							{isSaving && aiThinking ? (
-								<details className="border border-[#17140f]/10 bg-[#11110d] p-4 text-white/75">
-									<summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.14em] text-[#d0aa57]">
-										AI thinking
-									</summary>
-									<p className="mt-3 max-h-36 overflow-hidden font-mono text-xs leading-5">
-										{aiThinking.slice(-900)}
-									</p>
-								</details>
+							{isSaving && aiThinkingTokens > 0 ? (
+								<div className="border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs uppercase tracking-[0.14em] text-[#d0aa57]">
+									AI thinking stream active · {aiThinkingTokens} ticks
+								</div>
 							) : null}
 							{error ? (
 								<Alert className="border-[#a75d3f]/30 bg-[#fff4ed] text-[#17140f]">

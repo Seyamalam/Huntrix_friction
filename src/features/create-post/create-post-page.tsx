@@ -46,7 +46,7 @@ export function CreatePostPage() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [chunks, setChunks] = useState<ReadingChunk[]>([]);
 	const [aiStream, setAiStream] = useState("");
-	const [aiThinking, setAiThinking] = useState("");
+	const [aiThinkingTokens, setAiThinkingTokens] = useState(0);
 
 	async function createRoom() {
 		if (!auth.user) {
@@ -73,7 +73,7 @@ export function CreatePostPage() {
 		setIsSaving(true);
 		setError("");
 		setAiStream("");
-		setAiThinking("");
+		setAiThinkingTokens(0);
 		setChunks([]);
 
 		const now = Date.now();
@@ -90,7 +90,7 @@ export function CreatePostPage() {
 				},
 				(delta, kind) => {
 					if (kind === "thinking") {
-						setAiThinking((current) => `${current}${delta}`);
+						setAiThinkingTokens((current) => current + 1);
 						return;
 					}
 					setAiStream((current) => `${current}${delta}`);
@@ -286,15 +286,10 @@ export function CreatePostPage() {
 									{aiStream.slice(-900)}
 								</div>
 							) : null}
-							{isSaving && aiThinking ? (
-								<details className="border border-white/18 bg-white/8 p-3 text-xs text-white/75">
-									<summary className="cursor-pointer font-mono uppercase tracking-[0.14em] text-[#d0aa57]">
-										thinking
-									</summary>
-									<p className="mt-2 max-h-32 overflow-hidden font-mono leading-5">
-										{aiThinking.slice(-700)}
-									</p>
-								</details>
+							{isSaving && aiThinkingTokens > 0 ? (
+								<div className="border border-white/18 bg-white/8 p-3 font-mono text-xs uppercase tracking-[0.14em] text-[#d0aa57]">
+									thinking stream active · {aiThinkingTokens} ticks
+								</div>
 							) : null}
 						</div>
 						{error ? (

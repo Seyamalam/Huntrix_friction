@@ -2,6 +2,8 @@ import { Cursors, id } from "@instantdb/react";
 import {
 	ArrowLeft,
 	ArrowRight,
+	ArrowsInSimple,
+	ArrowsOutSimple,
 	ChatCircleDots,
 	ChatText,
 	CheckCircle,
@@ -11,8 +13,11 @@ import {
 	Globe,
 	LockKey,
 	Megaphone,
+	Minus,
+	Plus,
 	PushPin,
 	Target,
+	TextAa,
 	UsersThree,
 	WarningCircle,
 } from "@phosphor-icons/react";
@@ -82,6 +87,9 @@ function ReadingSessionPage() {
 	const [isPostingComment, setIsPostingComment] = useState(false);
 	const [isUpdatingSession, setIsUpdatingSession] = useState(false);
 	const [responseActionId, setResponseActionId] = useState("");
+	const [isZenMode, setIsZenMode] = useState(false);
+	const [fontScale, setFontScale] = useState(1);
+	const [redFocusMode, setRedFocusMode] = useState(false);
 	const cursorColor = useRef(
 		colorFromString(auth.user?.id ?? sessionId),
 	).current;
@@ -560,260 +568,607 @@ function ReadingSessionPage() {
 			room={room}
 			spaceId="cursor"
 			userCursorColor={cursorColor}
-			className="min-h-dvh px-4 py-5 sm:px-6 lg:px-8"
+			className={cn(
+				"bg-[#f5f1e8]",
+				isZenMode
+					? "fixed inset-0 z-50 px-3 py-3 sm:px-5"
+					: "min-h-dvh px-4 py-5 sm:px-6 lg:px-8",
+			)}
 			zIndex={60}
 		>
-			<section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
-				<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
-					<Link
-						to="/app"
-						className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#5d574a] hover:text-[#17140f]"
-					>
-						<ArrowLeft className="size-4" />
-						Back to workspace
-					</Link>
-					<div className="flex flex-wrap items-start justify-between gap-4">
-						<div>
-							<Badge className="rounded-none bg-[#14876d] text-white">
-								{session.mode}
-							</Badge>
-							<h1 className="mt-5 max-w-4xl text-4xl font-black leading-none text-balance lg:text-5xl">
-								{session.post?.title ?? "Reading session"}
-							</h1>
+			<section
+				className={cn(
+					"grid h-[calc(100dvh-2.5rem)] min-h-0 gap-4 overflow-hidden",
+					isZenMode
+						? "grid-cols-1"
+						: "xl:grid-cols-[minmax(0,1fr)_minmax(21rem,24rem)]",
+				)}
+			>
+				<div className="flex min-h-0 flex-col border border-[#17140f]/10 bg-white text-[#17140f]">
+					<header className="shrink-0 border-b border-[#17140f]/10 bg-white/95 p-4 backdrop-blur">
+						<div className="flex flex-wrap items-center justify-between gap-3">
+							{isZenMode ? (
+								<div className="min-w-0">
+									<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+										Zen reader
+									</p>
+									<p className="mt-1 truncate text-sm font-black">
+										{session.post?.title ?? "Reading session"}
+									</p>
+								</div>
+							) : (
+								<Link
+									to="/app"
+									className="inline-flex items-center gap-2 text-sm font-semibold text-[#5d574a] hover:text-[#17140f]"
+								>
+									<ArrowLeft className="size-4" />
+									Back to workspace
+								</Link>
+							)}
+							<ReaderControls
+								fontScale={fontScale}
+								isZenMode={isZenMode}
+								redFocusMode={redFocusMode}
+								onDecreaseFont={() =>
+									setFontScale((current) => Math.max(0.85, current - 0.1))
+								}
+								onIncreaseFont={() =>
+									setFontScale((current) => Math.min(1.45, current + 0.1))
+								}
+								onResetFont={() => setFontScale(1)}
+								onToggleRedFocus={() => setRedFocusMode((current) => !current)}
+								onToggleZen={() => setIsZenMode((current) => !current)}
+							/>
 						</div>
-						<p className="font-mono text-5xl font-black tabular-nums">
-							{progressValue}%
-						</p>
-					</div>
 
-					<Progress value={progressValue} className="mt-7">
-						<ProgressLabel>Unlocked progress</ProgressLabel>
-						<ProgressValue className="text-[#5d574a]">
-							{() => `${completedCount}/${chunks.length}`}
-						</ProgressValue>
-					</Progress>
+						{!isZenMode ? (
+							<>
+								<div className="mt-5 flex flex-wrap items-start justify-between gap-4">
+									<div>
+										<Badge className="rounded-none bg-[#14876d] text-white">
+											{session.mode}
+										</Badge>
+										<h1 className="mt-4 max-w-4xl text-3xl font-black leading-none text-balance lg:text-5xl">
+											{session.post?.title ?? "Reading session"}
+										</h1>
+									</div>
+									<p className="font-mono text-5xl font-black tabular-nums">
+										{progressValue}%
+									</p>
+								</div>
 
-					<SessionShareControls
-						access={sessionAccess}
-						copied={copied}
-						disabled={isUpdatingSession}
-						isOwner={isOwner}
-						onCopy={copySessionLink}
-						onUpdateAccess={updateAccess}
-					/>
+								<Progress value={progressValue} className="mt-5">
+									<ProgressLabel>Unlocked progress</ProgressLabel>
+									<ProgressValue className="text-[#5d574a]">
+										{() => `${completedCount}/${chunks.length}`}
+									</ProgressValue>
+								</Progress>
+
+								<SessionShareControls
+									access={sessionAccess}
+									copied={copied}
+									disabled={isUpdatingSession}
+									isOwner={isOwner}
+									onCopy={copySessionLink}
+									onUpdateAccess={updateAccess}
+								/>
+							</>
+						) : null}
+					</header>
 
 					{currentChunk ? (
-						<div className="mt-6 grid gap-4">
-							<div className="bg-[#f9f6ef] p-5 text-[#17140f]">
-								<div className="flex flex-wrap gap-2">
-									<Badge className="rounded-none bg-[#11110d] text-white">
-										Section {currentIndex + 1}
-									</Badge>
-									<Badge className="rounded-none bg-[#d0aa57] text-[#17140f]">
-										{Math.max(chunks.length - currentIndex - 1, 0)} locked
-									</Badge>
+						<div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
+							<article className="min-h-0 overflow-y-auto bg-[#fbf8f1] px-5 py-6 sm:px-8 lg:px-12">
+								<div className="mx-auto max-w-4xl">
+									<div className="flex flex-wrap gap-2">
+										<Badge className="rounded-none bg-[#11110d] text-white">
+											Section {currentIndex + 1}
+										</Badge>
+										<Badge className="rounded-none bg-[#d0aa57] text-[#17140f]">
+											{Math.max(chunks.length - currentIndex - 1, 0)} locked
+										</Badge>
+										{redFocusMode ? (
+											<Badge className="rounded-none bg-[#fff4ed] text-[#a75d3f]">
+												red focus
+											</Badge>
+										) : null}
+									</div>
+									<h2 className="mt-6 text-3xl font-black leading-tight text-balance lg:text-5xl">
+										{currentChunk.mainClaim}
+									</h2>
+									<FormattedReadingText
+										fontScale={fontScale}
+										redFocusMode={redFocusMode}
+										text={currentChunk.text}
+									/>
 								</div>
-								<p className="mt-5 text-2xl font-black leading-tight">
-									{currentChunk.mainClaim}
-								</p>
-								<p className="mt-4 text-base leading-8 text-[#5d574a]">
-									{currentChunk.text}
-								</p>
-							</div>
+							</article>
 
-							{isComplete ? (
-								<Alert className="border-[#14876d]/25 bg-[#effaf2] text-[#17140f]">
-									<CheckCircle className="size-4 text-[#14876d]" />
-									<AlertTitle>Session completed</AlertTitle>
-									<AlertDescription>
-										The report is saved. Review the weak spots before sharing
-										this as understood.
-									</AlertDescription>
-								</Alert>
-							) : (
-								<>
-									<Field>
-										<FieldLabel>{currentChunk.prompt}</FieldLabel>
-										<Textarea
-											value={answer}
-											onChange={(event) => setAnswer(event.target.value)}
-											onKeyDown={typing.inputProps.onKeyDown}
-											onBlur={typing.inputProps.onBlur}
-											className="min-h-32 border-[#17140f]/15 bg-[#f9f6ef] text-sm leading-6 text-[#17140f] placeholder:text-[#5d574a]"
-											placeholder="Answer in your own words."
-										/>
-										<p className="min-h-5 text-xs font-medium text-[#5d574a]">
-											{typing.active.length ? typingInfo(typing.active) : " "}
-										</p>
-									</Field>
-									<Button
-										type="button"
-										size="lg"
-										disabled={isSaving || answer.trim().length < 6}
-										onClick={submitReflection}
-										className="h-12 w-fit bg-[#11110d] px-5 text-white hover:bg-[#14876d]"
-									>
-										{isSaving ? "Streaming AI check" : "Check and save"}
-										<ArrowRight className="size-4" />
-									</Button>
-									{canOverrideCurrent && isOwner ? (
-										<Button
-											type="button"
-											size="lg"
-											disabled={isSaving}
-											onClick={continueAfterFollowUp}
-											className="h-12 w-fit border border-[#17140f]/15 bg-white px-5 text-[#17140f] hover:bg-[#f9f6ef]"
-										>
-											Continue after follow-up
-											<ArrowRight className="size-4" />
-										</Button>
-									) : null}
-								</>
-							)}
-
-							{currentResponse ? (
-								<Alert
-									className={cn(
-										"border-[#17140f]/10 text-[#17140f]",
-										currentResponse.grade === "clear"
-											? "bg-[#effaf2]"
-											: "bg-[#fff4ed]",
-									)}
-								>
-									{currentResponse.grade === "clear" ? (
-										<CheckCircle className="size-4 text-[#14876d]" />
+							<div className="max-h-[42dvh] overflow-y-auto border-t border-[#17140f]/10 bg-white p-4">
+								<div className="mx-auto grid max-w-4xl gap-4">
+									{isComplete ? (
+										<Alert className="border-[#14876d]/25 bg-[#effaf2] text-[#17140f]">
+											<CheckCircle className="size-4 text-[#14876d]" />
+											<AlertTitle>Session completed</AlertTitle>
+											<AlertDescription>
+												The report is saved. Review the weak spots before
+												sharing this as understood.
+											</AlertDescription>
+										</Alert>
 									) : (
-										<WarningCircle className="size-4 text-[#a75d3f]" />
+										<>
+											<Field>
+												<FieldLabel>{currentChunk.prompt}</FieldLabel>
+												<Textarea
+													value={answer}
+													onChange={(event) => setAnswer(event.target.value)}
+													onKeyDown={typing.inputProps.onKeyDown}
+													onBlur={typing.inputProps.onBlur}
+													className="min-h-32 border-[#17140f]/15 bg-[#f9f6ef] text-sm leading-6 text-[#17140f] placeholder:text-[#5d574a]"
+													placeholder="Answer in your own words."
+												/>
+												<p className="min-h-5 text-xs font-medium text-[#5d574a]">
+													{typing.active.length
+														? typingInfo(typing.active)
+														: " "}
+												</p>
+											</Field>
+											<Button
+												type="button"
+												size="lg"
+												disabled={isSaving || answer.trim().length < 6}
+												onClick={submitReflection}
+												className="h-12 w-fit bg-[#11110d] px-5 text-white hover:bg-[#14876d]"
+											>
+												{isSaving ? "Streaming AI check" : "Check and save"}
+												<ArrowRight className="size-4" />
+											</Button>
+											{canOverrideCurrent && isOwner ? (
+												<Button
+													type="button"
+													size="lg"
+													disabled={isSaving}
+													onClick={continueAfterFollowUp}
+													className="h-12 w-fit border border-[#17140f]/15 bg-white px-5 text-[#17140f] hover:bg-[#f9f6ef]"
+												>
+													Continue after follow-up
+													<ArrowRight className="size-4" />
+												</Button>
+											) : null}
+										</>
 									)}
-									<AlertTitle>
-										{currentResponse.grade === "clear"
-											? "Last answer was clear"
-											: "Last answer needs revision"}
-									</AlertTitle>
-									<AlertDescription>
-										{currentResponse.feedback}
-									</AlertDescription>
-								</Alert>
-							) : null}
 
-							<SectionAnswersPanel
-								answers={currentSectionAnswers}
-								isOwner={isOwner}
-								onToggleFeatured={toggleFeaturedResponse}
-								responseActionId={responseActionId}
-							/>
+									{currentResponse ? (
+										<Alert
+											className={cn(
+												"border-[#17140f]/10 text-[#17140f]",
+												currentResponse.grade === "clear"
+													? "bg-[#effaf2]"
+													: "bg-[#fff4ed]",
+											)}
+										>
+											{currentResponse.grade === "clear" ? (
+												<CheckCircle className="size-4 text-[#14876d]" />
+											) : (
+												<WarningCircle className="size-4 text-[#a75d3f]" />
+											)}
+											<AlertTitle>
+												{currentResponse.grade === "clear"
+													? "Last answer was clear"
+													: "Last answer needs revision"}
+											</AlertTitle>
+											<AlertDescription>
+												{currentResponse.feedback}
+											</AlertDescription>
+										</Alert>
+									) : null}
 
-							<SectionDiscussionPanel
-								comment={comment}
-								comments={currentSectionComments}
-								disabled={isPostingComment}
-								onCommentChange={setComment}
-								onPostComment={postComment}
-							/>
-
-							{status ? (
-								<Alert className="border-[#17140f]/10 bg-[#f9f6ef] text-[#17140f]">
-									<LockKey className="size-4 text-[#14876d]" />
-									<AlertTitle>Saved</AlertTitle>
-									<AlertDescription>{status}</AlertDescription>
-								</Alert>
-							) : null}
-							{isSaving && aiStream ? (
-								<div className="max-h-44 overflow-hidden border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs leading-5 text-white/75">
-									{aiStream.slice(-1200)}
+									{status ? (
+										<Alert className="border-[#17140f]/10 bg-[#f9f6ef] text-[#17140f]">
+											<LockKey className="size-4 text-[#14876d]" />
+											<AlertTitle>Saved</AlertTitle>
+											<AlertDescription>{status}</AlertDescription>
+										</Alert>
+									) : null}
+									{isSaving && aiStream ? (
+										<div className="max-h-44 overflow-hidden border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs leading-5 text-white/75">
+											{aiStream.slice(-1200)}
+										</div>
+									) : null}
+									{isSaving && aiThinkingTokens > 0 ? (
+										<div className="border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs uppercase tracking-[0.14em] text-[#d0aa57]">
+											AI thinking stream active · {aiThinkingTokens} ticks
+										</div>
+									) : null}
+									{error ? (
+										<Alert className="border-[#a75d3f]/30 bg-[#fff4ed] text-[#17140f]">
+											<WarningCircle className="size-4 text-[#a75d3f]" />
+											<AlertTitle>Could not save answer</AlertTitle>
+											<AlertDescription>{error}</AlertDescription>
+										</Alert>
+									) : null}
 								</div>
-							) : null}
-							{isSaving && aiThinkingTokens > 0 ? (
-								<div className="border border-[#17140f]/10 bg-[#11110d] p-4 font-mono text-xs uppercase tracking-[0.14em] text-[#d0aa57]">
-									AI thinking stream active · {aiThinkingTokens} ticks
-								</div>
-							) : null}
-							{error ? (
-								<Alert className="border-[#a75d3f]/30 bg-[#fff4ed] text-[#17140f]">
-									<WarningCircle className="size-4 text-[#a75d3f]" />
-									<AlertTitle>Could not save answer</AlertTitle>
-									<AlertDescription>{error}</AlertDescription>
-								</Alert>
-							) : null}
+							</div>
 						</div>
 					) : null}
 				</div>
 
-				<aside className="grid content-start gap-4">
-					<PresencePanel
-						chunkCount={chunks.length}
-						currentSection={currentIndex + 1}
-						presence={presence}
-						typingPeers={typing.active}
-					/>
+				<aside
+					className={cn("min-h-0 overflow-y-auto pr-1", isZenMode && "hidden")}
+				>
+					<div className="grid content-start gap-4">
+						<PresencePanel
+							chunkCount={chunks.length}
+							currentSection={currentIndex + 1}
+							presence={presence}
+							typingPeers={typing.active}
+						/>
 
-					<FacilitatorPanel
-						currentNote={session.facilitatorNote}
-						currentSection={currentIndex + 1}
-						disabled={isUpdatingSession}
-						groupSection={Number(session.groupCurrentChunkIndex ?? 0) + 1}
-						isOwner={isOwner}
-						note={facilitatorNote}
-						onMoveGroup={moveGroupToCurrentSection}
-						onNoteChange={setFacilitatorNote}
-						onPublishNote={publishFacilitatorNote}
-					/>
+						<FacilitatorPanel
+							currentNote={session.facilitatorNote}
+							currentSection={currentIndex + 1}
+							disabled={isUpdatingSession}
+							groupSection={Number(session.groupCurrentChunkIndex ?? 0) + 1}
+							isOwner={isOwner}
+							note={facilitatorNote}
+							onMoveGroup={moveGroupToCurrentSection}
+							onNoteChange={setFacilitatorNote}
+							onPublishNote={publishFacilitatorNote}
+						/>
 
-					<ParticipantProgressPanel progress={groupProgress} />
+						<ParticipantProgressPanel progress={groupProgress} />
 
-					<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
-						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
-							section map
-						</p>
-						<div className="mt-5 grid gap-2">
-							{chunks.map((chunk, index) => {
-								const response = latestResponses[chunk.id];
-								const active = index === currentIndex;
-								return (
-									<div
-										key={chunk.id}
-										className={cn(
-											"border p-3 text-sm",
-											active
-												? "border-[#14876d] bg-[#14876d]/10"
-												: "border-[#17140f]/10 bg-[#f9f6ef]",
-										)}
-									>
-										<div className="flex items-center justify-between gap-2">
-											<span className="font-semibold">Section {index + 1}</span>
-											<span className="font-mono text-xs text-[#5d574a]">
-												{response?.grade ?? "locked"}
-											</span>
-										</div>
-									</div>
-								);
-							})}
+						<SectionMapPanel
+							chunks={chunks}
+							currentIndex={currentIndex}
+							latestResponses={latestResponses}
+						/>
+
+						<SectionAnswersPanel
+							answers={currentSectionAnswers}
+							isOwner={isOwner}
+							onToggleFeatured={toggleFeaturedResponse}
+							responseActionId={responseActionId}
+						/>
+
+						<SectionDiscussionPanel
+							comment={comment}
+							comments={currentSectionComments}
+							disabled={isPostingComment}
+							onCommentChange={setComment}
+							onPostComment={postComment}
+						/>
+
+						<GroupReportPanel report={groupReport} />
+
+						<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+							<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+								understanding report
+							</p>
+							<p className="mt-5 text-3xl font-black leading-none">
+								{isComplete ? "Saved report" : "In progress"}
+							</p>
+							<div className="mt-5 grid grid-cols-3 gap-2">
+								<MiniMetric label="clear" value={report.clearAnswers} />
+								<MiniMetric label="revise" value={report.revisions} />
+								<MiniMetric label="weak" value={report.weakSections.length} />
+							</div>
+							<p className="mt-5 text-sm leading-7 text-[#5d574a]">
+								{isComplete
+									? report.summary
+									: "Finish all checkpoints to save a report with claims, strengths, weak spots, and review prompts."}
+							</p>
 						</div>
-					</div>
-
-					<GroupReportPanel report={groupReport} />
-
-					<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
-						<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
-							understanding report
-						</p>
-						<p className="mt-5 text-3xl font-black leading-none">
-							{isComplete ? "Saved report" : "In progress"}
-						</p>
-						<div className="mt-5 grid grid-cols-3 gap-2">
-							<MiniMetric label="clear" value={report.clearAnswers} />
-							<MiniMetric label="revise" value={report.revisions} />
-							<MiniMetric label="weak" value={report.weakSections.length} />
-						</div>
-						<p className="mt-5 text-sm leading-7 text-[#5d574a]">
-							{isComplete
-								? report.summary
-								: "Finish all checkpoints to save a report with claims, strengths, weak spots, and review prompts."}
-						</p>
 					</div>
 				</aside>
 			</section>
 		</Cursors>
+	);
+}
+
+function ReaderControls({
+	fontScale,
+	isZenMode,
+	redFocusMode,
+	onDecreaseFont,
+	onIncreaseFont,
+	onResetFont,
+	onToggleRedFocus,
+	onToggleZen,
+}: {
+	fontScale: number;
+	isZenMode: boolean;
+	redFocusMode: boolean;
+	onDecreaseFont: () => void;
+	onIncreaseFont: () => void;
+	onResetFont: () => void;
+	onToggleRedFocus: () => void;
+	onToggleZen: () => void;
+}) {
+	return (
+		<div className="flex flex-wrap items-center gap-2">
+			<div className="flex items-center border border-[#17140f]/10 bg-[#f9f6ef]">
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={onDecreaseFont}
+					className="h-9 w-9 rounded-none text-[#17140f] hover:bg-[#17140f]/10"
+					aria-label="Decrease font size"
+				>
+					<Minus className="size-4" />
+				</Button>
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={onResetFont}
+					className="h-9 rounded-none px-3 font-mono text-xs text-[#5d574a] hover:bg-[#17140f]/10 hover:text-[#17140f]"
+				>
+					<TextAa className="size-4" />
+					{Math.round(fontScale * 100)}%
+				</Button>
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={onIncreaseFont}
+					className="h-9 w-9 rounded-none text-[#17140f] hover:bg-[#17140f]/10"
+					aria-label="Increase font size"
+				>
+					<Plus className="size-4" />
+				</Button>
+			</div>
+			<Button
+				type="button"
+				onClick={onToggleRedFocus}
+				className={cn(
+					"h-9 rounded-none border px-3 text-xs font-bold",
+					redFocusMode
+						? "border-[#a75d3f] bg-[#a75d3f] text-white hover:bg-[#8d4f35]"
+						: "border-[#17140f]/10 bg-white text-[#5d574a] hover:bg-[#f9f6ef]",
+				)}
+			>
+				Red focus
+			</Button>
+			<Button
+				type="button"
+				onClick={onToggleZen}
+				className="h-9 rounded-none bg-[#11110d] px-3 text-white hover:bg-[#14876d]"
+			>
+				{isZenMode ? (
+					<ArrowsInSimple className="size-4" />
+				) : (
+					<ArrowsOutSimple className="size-4" />
+				)}
+				{isZenMode ? "Exit zen" : "Zen"}
+			</Button>
+		</div>
+	);
+}
+
+function FormattedReadingText({
+	fontScale,
+	redFocusMode,
+	text,
+}: {
+	fontScale: number;
+	redFocusMode: boolean;
+	text: string;
+}) {
+	const blocks = stableTextParts(
+		text
+			.split(/\n{2,}/)
+			.map((block) => block.trim())
+			.filter(Boolean),
+	);
+
+	return (
+		<div
+			className="mt-8 grid gap-5 text-[#3f392f]"
+			style={{
+				fontSize: `${1.1 * fontScale}rem`,
+				lineHeight: 1.85,
+			}}
+		>
+			{blocks.length ? (
+				blocks.map((block) => (
+					<ReadingBlock
+						key={block.key}
+						redFocusMode={redFocusMode}
+						text={block.text}
+					/>
+				))
+			) : (
+				<p>{text}</p>
+			)}
+		</div>
+	);
+}
+
+function ReadingBlock({
+	redFocusMode,
+	text,
+}: {
+	redFocusMode: boolean;
+	text: string;
+}) {
+	const heading = text.match(/^(#{1,3})\s+(.+)/);
+	const bullet = text.match(/^[-*]\s+(.+)/);
+
+	if (heading) {
+		return (
+			<h3 className="text-3xl font-black leading-tight text-[#17140f]">
+				<InlineReadingText redFocusMode={redFocusMode} text={heading[2]} />
+			</h3>
+		);
+	}
+
+	if (bullet) {
+		return (
+			<div className="grid grid-cols-[1rem_minmax(0,1fr)] gap-3">
+				<span className="mt-3 size-1.5 bg-[#14876d]" />
+				<p>
+					<InlineReadingText redFocusMode={redFocusMode} text={bullet[1]} />
+				</p>
+			</div>
+		);
+	}
+
+	return (
+		<p>
+			<InlineReadingText redFocusMode={redFocusMode} text={text} />
+		</p>
+	);
+}
+
+function InlineReadingText({
+	redFocusMode,
+	text,
+}: {
+	redFocusMode: boolean;
+	text: string;
+}) {
+	const segments = stableTextParts(
+		text.split(
+			/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\([^)]+\)|\*[^*]+\*|_[^_]+_)/g,
+		),
+	);
+
+	return (
+		<>
+			{segments.map((segment) => (
+				<InlineReadingSegment
+					key={segment.key}
+					redFocusMode={redFocusMode}
+					text={segment.text}
+				/>
+			))}
+		</>
+	);
+}
+
+function InlineReadingSegment({
+	redFocusMode,
+	text,
+}: {
+	redFocusMode: boolean;
+	text: string;
+}) {
+	const link = text.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+	if (link) {
+		return (
+			<a
+				href={link[2]}
+				target="_blank"
+				rel="noreferrer"
+				className="font-bold text-[#14876d] underline decoration-[#14876d]/30 underline-offset-4"
+			>
+				<FocusedText redFocusMode={redFocusMode} text={link[1]} />
+			</a>
+		);
+	}
+
+	if (text.startsWith("**") && text.endsWith("**")) {
+		return (
+			<strong className="font-black text-[#17140f]">
+				<FocusedText redFocusMode={redFocusMode} text={text.slice(2, -2)} />
+			</strong>
+		);
+	}
+
+	if (text.startsWith("__") && text.endsWith("__")) {
+		return (
+			<strong className="font-black text-[#17140f]">
+				<FocusedText redFocusMode={redFocusMode} text={text.slice(2, -2)} />
+			</strong>
+		);
+	}
+
+	if (text.startsWith("`") && text.endsWith("`")) {
+		return (
+			<code className="border border-[#17140f]/10 bg-white px-1.5 py-0.5 font-mono text-[0.9em] text-[#17140f]">
+				{text.slice(1, -1)}
+			</code>
+		);
+	}
+
+	if (
+		(text.startsWith("*") && text.endsWith("*")) ||
+		(text.startsWith("_") && text.endsWith("_"))
+	) {
+		return (
+			<em className="text-[#5d574a]">
+				<FocusedText redFocusMode={redFocusMode} text={text.slice(1, -1)} />
+			</em>
+		);
+	}
+
+	return <FocusedText redFocusMode={redFocusMode} text={text} />;
+}
+
+function FocusedText({
+	redFocusMode,
+	text,
+}: {
+	redFocusMode: boolean;
+	text: string;
+}) {
+	const tokens = stableTextParts(text.split(/(\s+)/));
+
+	return (
+		<>
+			{tokens.map((token) =>
+				token.text.trim() ? (
+					<ReadingWord
+						key={token.key}
+						redFocusMode={redFocusMode}
+						word={token.text}
+					/>
+				) : (
+					token.text
+				),
+			)}
+		</>
+	);
+}
+
+function stableTextParts(parts: string[]) {
+	const counts = new Map<string, number>();
+
+	return parts.map((text) => {
+		const count = counts.get(text) ?? 0;
+		counts.set(text, count + 1);
+		return {
+			key: `${text.slice(0, 32)}:${count}`,
+			text,
+		};
+	});
+}
+
+function ReadingWord({
+	redFocusMode,
+	word,
+}: {
+	redFocusMode: boolean;
+	word: string;
+}) {
+	if (!redFocusMode || word.length < 4) return <>{word}</>;
+
+	const firstAlpha = word.search(/[A-Za-z0-9]/);
+	const lastAlpha = Math.max(
+		...Array.from(word)
+			.map((char, index) => (/[A-Za-z0-9]/.test(char) ? index : -1))
+			.filter((index) => index >= 0),
+	);
+
+	if (firstAlpha < 0 || lastAlpha < firstAlpha) return <>{word}</>;
+
+	const middle = Math.floor((firstAlpha + lastAlpha) / 2);
+
+	return (
+		<>
+			{word.slice(0, middle)}
+			<span className="font-black text-[#c43f2f]">{word[middle]}</span>
+			{word.slice(middle + 1)}
+		</>
 	);
 }
 
@@ -1078,6 +1433,51 @@ function ParticipantProgressPanel({
 					Reader progress appears after someone submits an answer.
 				</p>
 			)}
+		</div>
+	);
+}
+
+function SectionMapPanel({
+	chunks,
+	currentIndex,
+	latestResponses,
+}: {
+	chunks: ChunkRecord[];
+	currentIndex: number;
+	latestResponses: Record<string, ReaderResponse>;
+}) {
+	return (
+		<div className="border border-[#17140f]/10 bg-white p-5 text-[#17140f]">
+			<p className="font-mono text-xs uppercase tracking-[0.18em] text-[#14876d]">
+				section map
+			</p>
+			<div className="mt-5 grid gap-2">
+				{chunks.map((chunk, index) => {
+					const response = latestResponses[chunk.id];
+					const active = index === currentIndex;
+					return (
+						<div
+							key={chunk.id}
+							className={cn(
+								"border p-3 text-sm",
+								active
+									? "border-[#14876d] bg-[#14876d]/10"
+									: "border-[#17140f]/10 bg-[#f9f6ef]",
+							)}
+						>
+							<div className="flex items-center justify-between gap-2">
+								<span className="font-semibold">Section {index + 1}</span>
+								<span className="font-mono text-xs text-[#5d574a]">
+									{response?.grade ?? "locked"}
+								</span>
+							</div>
+							<p className="mt-2 line-clamp-2 text-xs leading-5 text-[#5d574a]">
+								{chunk.mainClaim}
+							</p>
+						</div>
+					);
+				})}
+			</div>
 		</div>
 	);
 }

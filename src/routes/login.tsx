@@ -9,8 +9,8 @@ import {
 	WarningCircle,
 } from "@phosphor-icons/react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +78,7 @@ function LoginPage() {
 
 function LoginExperience() {
 	const auth = db.useAuth();
+	const navigate = useNavigate();
 	const isGoogleConfigured = Boolean(
 		env.VITE_GOOGLE_CLIENT_ID && env.VITE_INSTANT_GOOGLE_CLIENT_NAME,
 	);
@@ -87,6 +88,12 @@ function LoginExperience() {
 	const [status, setStatus] = useState("");
 	const [error, setError] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	useEffect(() => {
+		if (!auth.isLoading && auth.user) {
+			void navigate({ replace: true, to: "/app" });
+		}
+	}, [auth.isLoading, auth.user, navigate]);
 
 	async function handleSendCode(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
